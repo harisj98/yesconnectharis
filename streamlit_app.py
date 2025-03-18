@@ -4980,7 +4980,6 @@ def main():
         st.session_state['country_filter'] = []
         st.session_state['career_filter'] = []
         st.session_state['date_range'] = [min_date, max_date]
-        st.experimental_rerun()
     
     # Main tabs
 # Modify tab creation to include the Forecasting tab
