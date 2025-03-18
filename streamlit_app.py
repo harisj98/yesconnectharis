@@ -1452,11 +1452,7 @@ def plot_model_performance(model_type, X_test, y_test):
     # Create the segmentation model visualization
    # st.subheader("YES! Connect Member Segmentation")
     
-    # Create custom HTML for the segmentation model
-    segmentation_html = """
-    <div style="width: 100%; background-color: white; border-radius: 0.5rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);">
-        <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem;">
-    """
+
     
     for segment in segment_insights:
         segmentation_html += f"""
