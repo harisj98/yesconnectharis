@@ -3390,18 +3390,6 @@ def create_market_opportunity_analysis(df, parent_tab=None):
     """
     Create a comprehensive market opportunity analysis visualization
     with strategic quadrants and actionable insights.
-    
-    Parameters:
-    -----------
-    df : pandas.DataFrame
-        DataFrame containing user data
-    parent_tab : streamlit container
-        Parent container to render elements within (for nested tabs)
-    
-    Returns:
-    --------
-    pandas.DataFrame
-        DataFrame with country opportunity metrics
     """
     # If this is being used as a subtab, use the parent container
     container = parent_tab if parent_tab else st
@@ -3417,6 +3405,7 @@ def create_market_opportunity_analysis(df, parent_tab=None):
     
     # Add methodology explanation and weight adjustment
     with container.expander("📊 Analysis Methodology & Weight Configuration", expanded=False):
+        # [Your existing methodology explanation code here]
         container.markdown("""
         ### Growth Potential Score Methodology
         
@@ -3860,6 +3849,17 @@ def create_market_opportunity_analysis(df, parent_tab=None):
                     """)
             else:
                 col2.info("No countries currently in this quadrant.")
+        
+        # Remove "Growth Driver Analysis" and "Recommended Next Steps" sections
+        
+        # But keep the return statement inside the try block!
+        return significant_countries
+        
+    except Exception as e:
+        container.error(f"Error in market opportunity analysis: {e}")
+        import traceback
+        container.exception(e)
+        return None
         
         
 
