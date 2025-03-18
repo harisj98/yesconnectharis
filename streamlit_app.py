@@ -5248,64 +5248,33 @@ def main():
 
             # Match clusters to predefined segments based on characteristics
 # Match clusters to predefined segments based on characteristics
+# Direct mapping approach - purposefully manipulating categories to match data
             segment_mapping = {}
             for cluster_id, metrics in cluster_characteristics.items():
-                # Calculate a "score" for each predefined segment based on how well this cluster matches
-                segment_scores = {
-                    "Network Builders": 0,
-                    "Academic Engagers": 0,
-                    "Emerging Professionals": 0,
-                    "Established Experts": 0,
-                    "Dormant Members": 0
-                }
+                # Default to Emerging Professionals as a fallback
+                assigned_segment = "Emerging Professionals"
                 
-                # Scoring logic - the higher, the better the match
+                # RULE 1: Only users with 300+ days since login go to Dormant Members
+                if metrics['avg_days_since_login'] >= 300:
+                    assigned_segment = "Dormant Members"
                 
-                # Network Builders: high connections, active, complete profiles
-                if metrics['avg_connections'] >= 10:
-                    segment_scores["Network Builders"] += 3
-                if metrics['profile_completion'] >= 70:
-                    segment_scores["Network Builders"] += 2
-                if metrics['avg_days_since_login'] <= 30:
-                    segment_scores["Network Builders"] += 3  # Increased from 2
+                # RULE 2: Students go to Academic Engagers (unless dormant)
+                elif 'top_career' in metrics and metrics['top_career'] == 'Student':
+                    assigned_segment = "Academic Engagers"
                 
-                # Academic Engagers: students, medium activity
-                if 'top_career' in metrics and metrics['top_career'] == 'Student':
-                    segment_scores["Academic Engagers"] += 5
-                if metrics['avg_days_since_login'] <= 90:
-                    segment_scores["Academic Engagers"] += 2  # Increased from 1
-                if metrics['avg_connections'] >= 3:  # Added new criteria
-                    segment_scores["Academic Engagers"] += 1
+                # RULE 3: Senior/Executive/Mid-Level go to Established Experts (unless dormant)
+                elif 'top_career' in metrics and metrics['top_career'] in ['Senior', 'Executive', 'Mid-Level Industry Professional']:
+                    assigned_segment = "Established Experts"
                 
-                # Emerging Professionals: early career, medium connections
-                if 'top_career' in metrics and metrics['top_career'] in ['Entry', 'Early Career Professional']:
-                    segment_scores["Emerging Professionals"] += 4
-                if 3 <= metrics['avg_connections'] <= 15:  # Lowered min from 5 to 3
-                    segment_scores["Emerging Professionals"] += 2
-                if metrics['avg_days_since_login'] <= 60:  # Added activity criteria
-                    segment_scores["Emerging Professionals"] += 2
+                # RULE 4: Entry/Early Career go to Emerging Professionals (unless dormant or another category)
+                elif 'top_career' in metrics and metrics['top_career'] in ['Entry', 'Early Career Professional']:
+                    assigned_segment = "Emerging Professionals"
                 
-                # Established Experts: senior roles, selective networking
-                if 'top_career' in metrics and metrics['top_career'] in ['Senior', 'Executive', 'Mid-Level Industry Professional']:
-                    segment_scores["Established Experts"] += 4
-                if metrics['avg_connections'] >= 5:
-                    segment_scores["Established Experts"] += 2  # Increased from 1
-                if metrics['avg_days_since_login'] <= 120:  # Added activity criteria
-                    segment_scores["Established Experts"] += 2
+                # RULE 5: High connections + active users with profile = Network Builders
+                elif metrics['avg_connections'] >= 8 and metrics['profile_completion'] >= 70 and metrics['avg_days_since_login'] <= 60:
+                    assigned_segment = "Network Builders"
                 
-                # Dormant Members: inactive users - MAKE THIS MORE SPECIFIC
-                if metrics['avg_days_since_login'] > 365:  # Changed from 180 to 365
-                    segment_scores["Dormant Members"] += 4  # Reduced from 5
-                elif metrics['avg_days_since_login'] > 180:  # Added tiered scoring
-                    segment_scores["Dormant Members"] += 2
-                if metrics['profile_completion'] < 30:  # Changed from 50 to 30
-                    segment_scores["Dormant Members"] += 2
-                if metrics['avg_connections'] < 2:  # Added low connection criteria
-                    segment_scores["Dormant Members"] += 1
-                
-                # Assign the best matching segment
-                best_segment = max(segment_scores.items(), key=lambda x: x[1])[0]
-                segment_mapping[cluster_id] = best_segment
+                segment_mapping[cluster_id] = assigned_segment
 
             # Map clusters to segment names
             df_filtered['segment'] = df_filtered['cluster'].map(lambda x: segment_mapping.get(x, f"Segment {x}"))
