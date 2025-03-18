@@ -5369,40 +5369,21 @@ def main():
                         # Hardcoded characteristics for Network Builders
                         st.markdown("#### Key Characteristics:")
                         st.markdown("* Student (42%)")
-                        st.markdown("* Limited connections (0-5 per user)")
-                        st.markdown("* Infrequent engagement (last login: 180+ days ago)")
-                        st.markdown("* Profile incomplete (0% with avatars)")
-                        st.markdown("* Web platform preferred (0% mobile users)")
                         st.markdown("* Strong presence in Kenya, Nigeria")
-                        
-                        st.markdown("#### Recommended Strategy:")
-                        st.markdown("*Implement basic onboarding campaigns focused on profile completion and making first connections. Provide simple guides for platform navigation and highlight immediate benefits of engagement.*")
                     
                     elif segment['name'] == "Established Experts":
                         # Hardcoded characteristics for Established Experts
                         st.markdown("#### Key Characteristics:")
-                        st.markdown("* Student (49%)")
-                        st.markdown("* Minimal network activity (0-3 connections)")
+                        st.markdown("* Senior Industry, Entrepreneur, Student (49%)")
                         st.markdown("* Long-term inactive (500+ days since login)")
-                        st.markdown("* Incomplete profiles (0% with avatars)")
-                        st.markdown("* Web-only users (0% mobile adoption)")
-                        st.markdown("* Concentrated in Kenya, Nigeria")
-                        
-                        st.markdown("#### Recommended Strategy:")
-                        st.markdown("*Execute targeted re-engagement campaigns with compelling value propositions. Implement simplified mobile onboarding and personalized content recommendations for inactive members.*")
-                    
+                        st.markdown("* Concentrated in Kenya, South Africa")
+                                      
                     elif segment['name'] == "Academic Engagers":
                         # Hardcoded characteristics for Academic Engagers
                         st.markdown("#### Key Characteristics:")
                         st.markdown("* Students and early academics (majority)")
-                        st.markdown("* Beginner networkers (5-10 connections)")
-                        st.markdown("* Occasional platform visitors (60-90 day login intervals)")
                         st.markdown("* Partial profile completion (30-40%)")
-                        st.markdown("* Growing mobile adoption (15-20%)")
-                        st.markdown("* Strong educational institution presence")
-                        
-                        st.markdown("#### Recommended Strategy:")
-                        st.markdown("*Provide educational resources, mentorship connections, and professional development opportunities. Focus on academic-professional bridging content and peer learning communities.*")
+                        st.markdown("* Strong mobile adoption")
                     
                     else:
                         # Use original dynamic approach for other segments
@@ -5410,10 +5391,6 @@ def main():
                         st.markdown("#### Key Characteristics:")
                         for trait in segment['characteristics']:
                             st.markdown(f"- {trait}")
-                        
-                        # Strategy section (stable)
-                        st.markdown("#### Recommended Strategy:")
-                        st.markdown(f"*{segment['strategy']}*")
                     
                     st.markdown("---")
             
