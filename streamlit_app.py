@@ -1450,7 +1450,7 @@ def plot_model_performance(model_type, X_test, y_test):
         })
     
     # Create the segmentation model visualization
-    st.subheader("YES! Connect Member Segmentation")
+   # st.subheader("YES! Connect Member Segmentation")
     
     # Create custom HTML for the segmentation model
     segmentation_html = """
