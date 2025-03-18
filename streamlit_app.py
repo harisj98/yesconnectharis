@@ -4513,20 +4513,12 @@ def main():
         # Inside tab1 where the geographic distribution is displayed
         st.subheader("Geographic Distribution")
         try:
-            # Original map
-            geo_fig = plot_geographic_distribution(df_filtered)
+            # Use the standardized map directly
+            geo_fig = plot_standardized_geographic_distribution(df_filtered)
             st.plotly_chart(geo_fig, use_container_width=True)
-    
-            # Add option to view standardized version
-            if st.button("Show Map with Standardized Country Names"):
-                # Create and display the standardized map
-                std_geo_fig = plot_standardized_geographic_distribution(df_filtered)
-                st.plotly_chart(std_geo_fig, use_container_width=True)
-                st.info("This version uses standardized country names, consolidating variations like 'USA' and 'United States'.")
+            st.caption("Map displays standardized country names for accurate regional analysis")
         except Exception as e:
-            st.error(f"Error generating geographic distribution: {e}")
-
-    
+            st.error(f"Error generating geographic distribution: {e}")  
     
         # Career distribution
         st.subheader("User Career Distribution")
