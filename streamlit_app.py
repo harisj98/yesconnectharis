@@ -4344,8 +4344,8 @@ def main():
     max_date = df['last_login_date'].max().date()
 
     if 'enable_country_standardization' in st.session_state and st.session_state['enable_country_standardization']:
-    df_standardized, _, _ = standardize_countries(df)
-    st.session_state['df_standardized'] = df_standardized
+        df_standardized, _, _ = standardize_countries(df)
+        st.session_state['df_standardized'] = df_standardized
     
     date_range = st.sidebar.date_input(
         "Date Range",
