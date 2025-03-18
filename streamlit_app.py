@@ -6037,8 +6037,6 @@ def main():
                     if st.button("Refresh Map with Standardized Countries"):
                         # Clear any cached results
                         st.cache_data.clear()
-                        # Force rerun
-                        st.experimental_rerun()
         
                     # Show a sample of the standardized data
                     st.subheader("Sample of Standardized Data")
