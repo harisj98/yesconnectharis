@@ -315,6 +315,96 @@ def get_country_similarity(name1, name2):
                            normalize_country_name(name2)).ratio()
 
 
+
+def plot_standardized_geographic_distribution(df_raw):
+    """
+    Create a geographic distribution plot with standardized country names.
+    This is a standalone function to avoid modifying the original.
+    """
+    # Apply standardization directly within this function
+    df_std, country_mapping, _ = standardize_countries(df_raw, 'Country', threshold=0.8)
+    
+    # Calculate country counts with standardized data
+    country_counts = df_std['Country'].value_counts().reset_index()
+    country_counts.columns = ['Country', 'Count']
+    
+    # Calculate percentages with correct total
+    total_users = len(df_std)
+    country_counts['Percentage'] = (country_counts['Count'] / total_users * 100).round(2)
+    
+    # Create choropleth map (same as original function)
+    fig = px.choropleth(
+        country_counts, 
+        locations='Country', 
+        locationmode='country names',
+        color='Percentage',
+        hover_name='Country',
+        hover_data={
+            'Count': ':,d',
+            'Percentage': ':.2f%',
+            'Country': False
+        },
+        color_continuous_scale=[
+            [0, "#f8edff"],
+            [0.25, "#e3c4ff"],
+            [0.5, "#c18eff"],
+            [0.75, "#9040ff"],
+            [1, "#5c00e6"]
+        ],
+        range_color=[0, max(country_counts['Percentage'].max() * 1.1, 20)],
+        projection='natural earth'
+    )
+    
+    # Rest of visualization code remains the same as original
+    fig.update_layout(
+        height=600,
+        title={
+            'text': 'Customer Distribution by Country (% of Total) - Standardized',
+            'font': {'size': 20},
+            'x': 0.5,
+            'y': 0.95
+        },
+        margin={'l': 0, 'r': 0, 't': 50, 'b': 10},
+        coloraxis_colorbar={
+            'title': '% of Customers',
+            'ticksuffix': '%'
+        },
+        geo={
+            'showcoastlines': True,
+            'showcountries': True,
+            'showland': True,
+            'landcolor': 'rgb(243, 243, 243)',
+            'countrycolor': 'rgb(204, 204, 204)',
+            'coastlinecolor': 'rgb(204, 204, 204)',
+            'projection_scale': 1.1
+        }
+    )
+    
+    # Update top countries summary
+    top_countries = country_counts.sort_values('Percentage', ascending=False).head(3)
+    summary_text = "<b>Top Countries (Standardized):</b><br>"
+    for i, row in enumerate(top_countries.itertuples()):
+        summary_text += f"{i+1}. {row.Country}: {row.Percentage:.2f}%<br>"
+    
+    fig.add_annotation(
+        text=summary_text,
+        x=0.01, y=0.99,
+        xref="paper", yref="paper",
+        showarrow=False,
+        font={'size': 12},
+        align="left",
+        bgcolor="rgba(255, 255, 255, 0.8)",
+        bordercolor="rgba(150, 150, 150, 0.8)",
+        borderwidth=1,
+        borderpad=4,
+        xanchor="left",
+        yanchor="top"
+    )
+    
+    return fig
+
+
+
 def apply_country_standardization(df, country_column='Country', threshold=0.8):
     """Apply country name standardization to the dataframe.
     Returns a copy of the dataframe with standardized country names."""
@@ -4420,14 +4510,23 @@ def main():
             </div>
             """, unsafe_allow_html=True)
         
-        # Geographic distribution
+        # Inside tab1 where the geographic distribution is displayed
         st.subheader("Geographic Distribution")
         try:
+            # Original map
             geo_fig = plot_geographic_distribution(df_filtered)
             st.plotly_chart(geo_fig, use_container_width=True)
+    
+            # Add option to view standardized version
+            if st.button("Show Map with Standardized Country Names"):
+                # Create and display the standardized map
+                std_geo_fig = plot_standardized_geographic_distribution(df_filtered)
+                st.plotly_chart(std_geo_fig, use_container_width=True)
+                st.info("This version uses standardized country names, consolidating variations like 'USA' and 'United States'.")
         except Exception as e:
             st.error(f"Error generating geographic distribution: {e}")
-        # In your tab1 section
+
+    
     
         # Career distribution
         st.subheader("User Career Distribution")
