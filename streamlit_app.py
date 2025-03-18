@@ -5566,39 +5566,7 @@ def main():
                 )
                 
                 st.plotly_chart(fig, use_container_width=True)
-                
-                # Generate insights based on actual data
-                st.markdown("#### Key Regional Insights:")
-                
-                insights = []
-                for i, region in enumerate(regions):
-                    if i < len(heatmap_data) and len(heatmap_data[i]) > 0:
-                        max_segment_idx = np.argmax(heatmap_data[i])
-                        if max_segment_idx < len(segment_names):
-                            max_segment = segment_names[max_segment_idx]
-                            max_value = heatmap_data[i][max_segment_idx]
-                            if max_value > 0:
-                                # Generate dynamic insight based on data
-                                if max_segment == "Network Builders":
-                                    insight = "suggesting strong community development in this region"
-                                elif max_segment == "Academic Engagers":
-                                    insight = "indicating educational institutions are key partners"
-                                elif max_segment == "Emerging Professionals":
-                                    insight = "suggesting career development resources would be valuable"
-                                elif max_segment == "Established Experts":
-                                    insight = "making it valuable for mentorship programs"
-                                elif max_segment == "Dormant Members":
-                                    insight = "suggesting potential connectivity or engagement barriers"
-                                else:
-                                    insight = "indicating a unique regional pattern"
                                     
-                                insights.append(f"- **{region}** is dominated by {max_segment} ({max_value:.0f}%), {insight}")
-                
-                if insights:
-                    st.markdown("\n".join(insights))
-                else:
-                    st.info("Not enough regional data to generate insights with current filters")
-                    
             except Exception as e:
                 st.warning(f"Unable to generate regional distribution: {e}")
                 st.info("Try adjusting your filters to include more diverse geographic data")
