@@ -4440,7 +4440,7 @@ def main():
     tab1, tab2, tab3, tab4, tab6,tab7, tab8 = st.tabs([
         "Overview Dashboard", 
         "User Engagement Analysis", 
-        "Network Analysis",
+        "Part C : Network Analysis",
         "Predictive Models",
         "Forecasting",
         "Data Dictionary",
