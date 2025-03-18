@@ -210,6 +210,47 @@ def load_data():
 
 
 
+def standardize_countries_for_visualization(df, country_column='Country'):
+    """Standardize country names to ensure compatibility with mapping tools"""
+    # Create a copy to avoid modifying the original
+    df_standardized = df.copy()
+    
+    # Define mappings for problematic country names
+    visualization_mappings = {
+        "SouthAfrica": "South Africa",
+        "UnitedStates": "United States",
+        "USA": "United States",
+        "US": "United States",
+        "UnitedKingdom": "United Kingdom",
+        "UK": "United Kingdom",
+        "UAE": "United Arab Emirates",
+        "SouthKorea": "South Korea",
+        "NorthKorea": "North Korea",
+        "NewZealand": "New Zealand",
+        "SaudiArabia": "Saudi Arabia",
+        "CostaRica": "Costa Rica",
+        "SriLanka": "Sri Lanka",
+        "PuertoRico": "Puerto Rico",
+        "DominicanRepublic": "Dominican Republic",
+        "CzechRepublic": "Czech Republic",
+        "ElSalvador": "El Salvador",
+        "SierraLeone": "Sierra Leone",
+        "BurkinaFaso": "Burkina Faso",
+        "CotedIvoire": "Côte d'Ivoire",
+        "CoteD'Ivoire": "Côte d'Ivoire",
+        "IvoryCoast": "Côte d'Ivoire",
+        "DRC": "Democratic Republic of the Congo",
+        "Congo-Kinshasa": "Democratic Republic of the Congo",
+        "Congo-Brazzaville": "Republic of the Congo",
+        "CentralAfricanRepublic": "Central African Republic"
+    }
+    
+    # Apply mappings
+    if country_column in df_standardized.columns:
+        df_standardized[country_column] = df_standardized[country_column].replace(visualization_mappings)
+    
+    return df_standardized
+
 
 # Function to calculate data completeness on raw data
 def calculate_data_completeness(df):
@@ -316,19 +357,21 @@ def get_country_similarity(name1, name2):
 
 
 
-def plot_standardized_geographic_distribution(df_raw):
+def plot_standardized_geographic_distribution(df):
     """
     Create a geographic distribution plot with standardized country names.
-    This is a standalone function to avoid modifying the original.
     """
-    # Apply standardization directly within this function
-    df_std, country_mapping, _ = standardize_countries(df_raw, 'Country', threshold=0.8)
+    # First apply your existing standardization
+    df_std, country_mapping, _ = standardize_countries(df, 'Country', threshold=0.8)
     
-    # Calculate country counts with standardized data
+    # Then apply the visualization-specific standardization
+    df_std = standardize_countries_for_visualization(df_std, 'Country')
+    
+    # Calculate country counts and percentages
     country_counts = df_std['Country'].value_counts().reset_index()
     country_counts.columns = ['Country', 'Count']
     
-    # Calculate percentages with correct total
+    # Calculate percentages for business context
     total_users = len(df_std)
     country_counts['Percentage'] = (country_counts['Count'] / total_users * 100).round(2)
     
