@@ -5187,7 +5187,7 @@ def main():
             
             st.dataframe(sample_display.sort_values('Churn Risk', ascending=False))
             
-elif selected_model == "User Segmentation":
+        elif selected_model == "User Segmentation":
             st.write("""
             **This model segments users into distinct behavior-based groups.**
             
