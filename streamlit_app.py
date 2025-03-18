@@ -370,12 +370,38 @@ def standardize_countries(df, country_column='Country', threshold=0.8):
     # Find similar countries
     similar_groups = find_similar_countries(countries, threshold)
     
+    # Common mapping overrides - this is the key change
+    # This ensures proper formats are used even if they aren't the most frequent
+    mapping_overrides = {
+        "SouthAfrica": "South Africa",
+        "South Africa": "South Africa",  # Keep this as is
+        "UnitedStates": "United States",
+        "USA": "United States",
+        "UnitedKingdom": "United Kingdom",
+        "UK": "United Kingdom", 
+        "SierraLeone": "Sierra Leone",
+        "SouthSudan": "South Sudan",
+        "TheGambia": "Gambia",  # Most maps expect "Gambia" not "The Gambia"
+        "Tunisie": "Tunisia",   # Use English name for consistency
+        # Add other overrides as needed
+    }
+    
     # Create a mapping dictionary
     country_mapping = {}
     for standard, variants in similar_groups.items():
-        for variant in variants:
-            if variant != standard:
-                country_mapping[variant] = standard
+        # Check if we should override the standard
+        if standard in mapping_overrides:
+            override_standard = mapping_overrides[standard]
+            for variant in variants:
+                country_mapping[variant] = override_standard
+        else:
+            for variant in variants:
+                if variant != standard:
+                    country_mapping[variant] = standard
+    
+    # Apply the overrides directly as well
+    for variant, standard in mapping_overrides.items():
+        country_mapping[variant] = standard
     
     # Create a copy of the dataframe to avoid modifying the original
     df_standardized = df.copy()
@@ -387,14 +413,28 @@ def standardize_countries(df, country_column='Country', threshold=0.8):
     # Create a summary dataframe for reporting
     summary_data = []
     for standard, variants in similar_groups.items():
+        effective_standard = mapping_overrides.get(standard, standard)
         for variant in variants:
             count = (df[country_column] == variant).sum()
+            mapped_to = effective_standard if variant != standard or standard in mapping_overrides else standard
             summary_data.append({
-                'Standard': standard,
+                'Standard': mapped_to,
                 'Variant': variant,
                 'Count': count,
-                'Action': 'Keep' if variant == standard else 'Replace'
+                'Action': 'Keep' if variant == standard and standard not in mapping_overrides else 'Replace'
             })
+    
+    # Add any direct override entries that weren't in similar groups
+    for variant, standard in mapping_overrides.items():
+        if not any(d['Variant'] == variant for d in summary_data):
+            count = (df[country_column] == variant).sum()
+            if count > 0:
+                summary_data.append({
+                    'Standard': standard,
+                    'Variant': variant,
+                    'Count': count,
+                    'Action': 'Replace'
+                })
     
     summary_df = pd.DataFrame(summary_data)
     
