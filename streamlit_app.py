@@ -5202,19 +5202,100 @@ def main():
             """)
             
             # Apply segmentation to filtered data
+# Apply segmentation to filtered data
             X_filtered = df_filtered[['total_friend_count', 'days_since_login', 'profile_completion', 'uses_mobile']].fillna(0)
             X_filtered_scaled = scaler.transform(X_filtered)
             df_filtered['cluster'] = segmentation_model.predict(X_filtered_scaled)
             
-            # Define segment mapping (keep this part stable)
-            segment_mapping = {
-                0: "Network Builders",
-                1: "Academic Engagers",
-                2: "Emerging Professionals",
-                3: "Established Experts",
-                4: "Dormant Members"
-            }
-            
+            # Keep the predefined segment names but match clusters to them intelligently
+            predefined_segments = [
+                "Network Builders",
+                "Academic Engagers", 
+                "Emerging Professionals",
+                "Established Experts",
+                "Dormant Members"
+            ]
+
+            # First, analyze the characteristics of each cluster
+            cluster_characteristics = {}
+            for cluster_id in sorted(df_filtered['cluster'].unique()):
+                cluster_df = df_filtered[df_filtered['cluster'] == cluster_id]
+                
+                # Skip if cluster is empty
+                if len(cluster_df) == 0:
+                    continue
+                    
+                # Get key metrics for this cluster
+                metrics = {
+                    'size': len(cluster_df),
+                    'avg_connections': cluster_df['total_friend_count'].median(),
+                    'avg_days_since_login': cluster_df['days_since_login'].median(),
+                    'profile_completion': cluster_df['profile_completion'].mean() * 100,
+                    'mobile_adoption': cluster_df['uses_mobile'].mean() * 100
+                }
+                
+                # Get career distribution
+                if 'Career Level' in cluster_df.columns:
+                    career_dist = cluster_df['Career Level'].value_counts(normalize=True)
+                    if len(career_dist) > 0:
+                        metrics['top_career'] = career_dist.index[0]
+                        metrics['top_career_pct'] = career_dist.iloc[0] * 100
+                    else:
+                        metrics['top_career'] = "Unknown"
+                        metrics['top_career_pct'] = 0
+                
+                cluster_characteristics[cluster_id] = metrics
+
+            # Match clusters to predefined segments based on characteristics
+            segment_mapping = {}
+            for cluster_id, metrics in cluster_characteristics.items():
+                # Calculate a "score" for each predefined segment based on how well this cluster matches
+                segment_scores = {
+                    "Network Builders": 0,
+                    "Academic Engagers": 0,
+                    "Emerging Professionals": 0,
+                    "Established Experts": 0,
+                    "Dormant Members": 0
+                }
+                
+                # Scoring logic - the higher, the better the match
+                
+                # Network Builders: high connections, active, complete profiles
+                if metrics['avg_connections'] >= 10:
+                    segment_scores["Network Builders"] += 3
+                if metrics['profile_completion'] >= 70:
+                    segment_scores["Network Builders"] += 2
+                if metrics['avg_days_since_login'] <= 30:
+                    segment_scores["Network Builders"] += 2
+                    
+                # Academic Engagers: students, medium activity
+                if 'top_career' in metrics and metrics['top_career'] == 'Student':
+                    segment_scores["Academic Engagers"] += 5
+                if metrics['avg_days_since_login'] <= 90:
+                    segment_scores["Academic Engagers"] += 1
+                    
+                # Emerging Professionals: early career, medium connections
+                if 'top_career' in metrics and metrics['top_career'] in ['Entry', 'Early Career Professional']:
+                    segment_scores["Emerging Professionals"] += 4
+                if 5 <= metrics['avg_connections'] <= 15:
+                    segment_scores["Emerging Professionals"] += 2
+                    
+                # Established Experts: senior roles, selective networking
+                if 'top_career' in metrics and metrics['top_career'] in ['Senior', 'Executive', 'Mid-Level Industry Professional']:
+                    segment_scores["Established Experts"] += 4
+                if metrics['avg_connections'] >= 5:
+                    segment_scores["Established Experts"] += 1
+                    
+                # Dormant Members: inactive users
+                if metrics['avg_days_since_login'] > 180:
+                    segment_scores["Dormant Members"] += 5
+                if metrics['profile_completion'] < 50:
+                    segment_scores["Dormant Members"] += 2
+                
+                # Assign the best matching segment
+                best_segment = max(segment_scores.items(), key=lambda x: x[1])[0]
+                segment_mapping[cluster_id] = best_segment
+
             # Map clusters to segment names
             df_filtered['segment'] = df_filtered['cluster'].map(lambda x: segment_mapping.get(x, f"Segment {x}"))
             
