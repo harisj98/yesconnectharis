@@ -4669,7 +4669,7 @@ def main():
             st.write("""
             **This model predicts which users are at risk of becoming inactive.**
             
-            Churn is defined as no login activity for 60+ days. The model uses:
+            This model uses the following features:
             - Connection count
             - Profile completion
             - Historical login patterns
