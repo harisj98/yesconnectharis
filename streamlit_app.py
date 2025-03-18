@@ -2438,16 +2438,7 @@ def trend_analysis_tab(df):
         
         day_fig = px.bar(day_counts, x='Day', y='Count', title='Login Activity by Day of Week')
         trend_subtab2.plotly_chart(day_fig, use_container_width=True)
-        
-        # Distribution of connection counts
-        trend_subtab2.subheader("Connection Distribution")
-        
-        connection_fig = px.histogram(df, 
-                                    x='total_friend_count',
-                                    title='Distribution of Connection Counts',
-                                    nbins=50)
-        trend_subtab2.plotly_chart(connection_fig, use_container_width=True)
-        
+              
         # Profile completion analysis
         trend_subtab2.subheader("Profile Completion Analysis")
         
