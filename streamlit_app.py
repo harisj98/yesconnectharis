@@ -5154,9 +5154,8 @@ def main():
     
     # Main tabs
 # Modify tab creation to include the Forecasting tab
-    tab1, tab2, tab3, tab4, tab6,tab7, tab8 = st.tabs([
+    tab1, tab3, tab4, tab6,tab7, tab8 = st.tabs([
         "Overview Dashboard", 
-        "User Engagement Analysis", 
         "Part C : Network Analysis",
         "Predictive Models",
         "Forecasting",
@@ -5236,37 +5235,7 @@ def main():
         # Badge progression over time
         st.subheader("Badge Achievement Over Time")
         badge_fig = plot_badge_progression(df)
-        st.plotly_chart(badge_fig, use_container_width=True)
-    
-    with tab2:
-        st.title("User Engagement Analysis")
-        
-        # Engagement metrics over time
-        st.subheader("Engagement Metrics Over Time")
-        engagement_fig = plot_engagement_metrics(df)
-        st.plotly_chart(engagement_fig, use_container_width=True)
-        
-        # Platform usage
-        platform_counts = df_filtered['platform'].value_counts().reset_index()
-        platform_counts.columns = ['Platform', 'Count']
-        
-        st.subheader("Platform Usage")
-        platform_fig = px.pie(platform_counts, values='Count', names='Platform',
-                             title='User Distribution by Platform')
-        st.plotly_chart(platform_fig, use_container_width=True)
-        
-        # User activity patterns
-        st.subheader("User Activity Patterns")
-        
-        # Login day of week
-        df_filtered['login_day'] = df_filtered['last_login_date'].dt.day_name()
-        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        day_counts = df_filtered['login_day'].value_counts().reindex(day_order).reset_index()
-        day_counts.columns = ['Day', 'Count']
-        
-        day_fig = px.bar(day_counts, x='Day', y='Count', title='Login Activity by Day of Week')
-        st.plotly_chart(day_fig, use_container_width=True)
-        
+        st.plotly_chart(badge_fig, use_container_width=True)     
     
     with tab3:
         st.title("Network Analysis")
