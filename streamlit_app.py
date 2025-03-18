@@ -2482,7 +2482,7 @@ def trend_analysis_tab(df):
             
             trend_subtab1.plotly_chart(fig, use_container_width=True)
     
-with trend_subtab2:
+    with trend_subtab2:
         trend_subtab2.title("User Engagement Analysis")
         
         # Engagement metrics over time
