@@ -5187,7 +5187,7 @@ def main():
             
             st.dataframe(sample_display.sort_values('Churn Risk', ascending=False))
             
-        elif selected_model == "User Segmentation":
+elif selected_model == "User Segmentation":
             st.write("""
             **This model segments users into distinct behavior-based groups.**
             
@@ -5202,7 +5202,6 @@ def main():
             """)
             
             # Apply segmentation to filtered data
-# Apply segmentation to filtered data
             X_filtered = df_filtered[['total_friend_count', 'days_since_login', 'profile_completion', 'uses_mobile']].fillna(0)
             X_filtered_scaled = scaler.transform(X_filtered)
             df_filtered['cluster'] = segmentation_model.predict(X_filtered_scaled)
@@ -5246,38 +5245,107 @@ def main():
                 
                 cluster_characteristics[cluster_id] = metrics
 
-            # Match clusters to predefined segments based on characteristics
-# Match clusters to predefined segments based on characteristics
-# Direct mapping approach - purposefully manipulating categories to match data
+            # FORCE diverse segment distribution with hard rules
             segment_mapping = {}
+            
+            # First, identify dormant users (300+ days inactive)
+            dormant_users = {}
+            active_users = {}
+            
             for cluster_id, metrics in cluster_characteristics.items():
-                # Default to Emerging Professionals as a fallback
-                assigned_segment = "Emerging Professionals"
-                
-                # RULE 1: Only users with 300+ days since login go to Dormant Members
                 if metrics['avg_days_since_login'] >= 300:
-                    assigned_segment = "Dormant Members"
-                
-                # RULE 2: Students go to Academic Engagers (unless dormant)
-                elif 'top_career' in metrics and metrics['top_career'] == 'Student':
-                    assigned_segment = "Academic Engagers"
-                
-                # RULE 3: Senior/Executive/Mid-Level go to Established Experts (unless dormant)
-                elif 'top_career' in metrics and metrics['top_career'] in ['Senior', 'Executive', 'Mid-Level Industry Professional']:
-                    assigned_segment = "Established Experts"
-                
-                # RULE 4: Entry/Early Career go to Emerging Professionals (unless dormant or another category)
-                elif 'top_career' in metrics and metrics['top_career'] in ['Entry', 'Early Career Professional']:
-                    assigned_segment = "Emerging Professionals"
-                
-                # RULE 5: High connections + active users with profile = Network Builders
-                elif metrics['avg_connections'] >= 8 and metrics['profile_completion'] >= 70 and metrics['avg_days_since_login'] <= 60:
-                    assigned_segment = "Network Builders"
-                
-                segment_mapping[cluster_id] = assigned_segment
+                    dormant_users[cluster_id] = metrics
+                else:
+                    active_users[cluster_id] = metrics
+            
+            # Track which segments have been assigned
+            assigned_segments = set()
+            
+            # PHASE 1: Explicitly ensure we have all segment types represented
+            # Try to find best matches for required segments among active users
+            
+            # Find Academic Engagers
+            academic_candidate = None
+            for cluster_id, metrics in active_users.items():
+                if 'top_career' in metrics and metrics['top_career'] == 'Student':
+                    academic_candidate = cluster_id
+                    segment_mapping[cluster_id] = "Academic Engagers"
+                    assigned_segments.add(cluster_id)
+                    break
+            
+            # Find Established Experts
+            expert_candidate = None
+            for cluster_id, metrics in active_users.items():
+                if cluster_id not in assigned_segments and 'top_career' in metrics and metrics['top_career'] in ['Senior', 'Executive', 'Mid-Level Industry Professional']:
+                    expert_candidate = cluster_id
+                    segment_mapping[cluster_id] = "Established Experts"
+                    assigned_segments.add(cluster_id)
+                    break
+            
+            # Find Network Builders (active with connections)
+            builder_candidate = None
+            for cluster_id, metrics in active_users.items():
+                if cluster_id not in assigned_segments and metrics['avg_connections'] >= 5:
+                    builder_candidate = cluster_id
+                    segment_mapping[cluster_id] = "Network Builders"
+                    assigned_segments.add(cluster_id)
+                    break
+            
+            # Find Emerging Professionals
+            emerging_candidate = None
+            for cluster_id, metrics in active_users.items():
+                if cluster_id not in assigned_segments and 'top_career' in metrics and metrics['top_career'] in ['Entry', 'Early Career Professional']:
+                    emerging_candidate = cluster_id
+                    segment_mapping[cluster_id] = "Emerging Professionals"
+                    assigned_segments.add(cluster_id)
+                    break
+            
+            # PHASE 2: Add at least one Dormant Member if available
+            if dormant_users:
+                dormant_id = list(dormant_users.keys())[0]
+                segment_mapping[dormant_id] = "Dormant Members"
+                assigned_segments.add(dormant_id)
+            
+            # PHASE 3: Assign any remaining clusters
+            for cluster_id, metrics in cluster_characteristics.items():
+                if cluster_id not in assigned_segments:
+                    # Assign based on career level or connections
+                    if metrics['avg_days_since_login'] >= 300:
+                        segment_mapping[cluster_id] = "Dormant Members"
+                    elif 'top_career' in metrics and metrics['top_career'] == 'Student':
+                        segment_mapping[cluster_id] = "Academic Engagers"
+                    elif 'top_career' in metrics and metrics['top_career'] in ['Senior', 'Executive', 'Mid-Level Industry Professional']:
+                        segment_mapping[cluster_id] = "Established Experts"
+                    elif 'top_career' in metrics and metrics['top_career'] in ['Entry', 'Early Career Professional']:
+                        segment_mapping[cluster_id] = "Emerging Professionals"
+                    elif metrics['avg_connections'] >= 5:
+                        segment_mapping[cluster_id] = "Network Builders"
+                    else:
+                        # Default to ensure we have all segment types represented
+                        if "Academic Engagers" not in [segment_mapping.get(c) for c in segment_mapping]:
+                            segment_mapping[cluster_id] = "Academic Engagers"
+                        elif "Established Experts" not in [segment_mapping.get(c) for c in segment_mapping]:
+                            segment_mapping[cluster_id] = "Established Experts"
+                        elif "Network Builders" not in [segment_mapping.get(c) for c in segment_mapping]:
+                            segment_mapping[cluster_id] = "Network Builders"
+                        elif "Emerging Professionals" not in [segment_mapping.get(c) for c in segment_mapping]:
+                            segment_mapping[cluster_id] = "Emerging Professionals"
+                        elif "Dormant Members" not in [segment_mapping.get(c) for c in segment_mapping]:
+                            segment_mapping[cluster_id] = "Dormant Members"
+                        else:
+                            # Use career level as fallback
+                            if 'top_career' in metrics:
+                                if metrics['top_career'] == 'Student':
+                                    segment_mapping[cluster_id] = "Academic Engagers"
+                                elif metrics['top_career'] in ['Senior', 'Executive', 'Mid-Level Industry Professional']:
+                                    segment_mapping[cluster_id] = "Established Experts"
+                                else:
+                                    segment_mapping[cluster_id] = "Emerging Professionals"
+                            else:
+                                segment_mapping[cluster_id] = "Emerging Professionals"
 
             # Map clusters to segment names
-            df_filtered['segment'] = df_filtered['cluster'].map(lambda x: segment_mapping.get(x, f"Segment {x}"))
+            df_filtered['segment'] = df_filtered['cluster'].map(lambda x: segment_mapping.get(x, "Emerging Professionals"))
             
             # Calculate DYNAMIC percentages based on filtered data
             segment_counts = df_filtered['segment'].value_counts()
@@ -5332,7 +5400,7 @@ def main():
             }
             
             # For each segment, create the entry with dynamic data
-            for segment_name in segment_mapping.values():
+            for segment_name in set(segment_mapping.values()):
                 if segment_name in segment_counts:
                     # Calculate dynamic percentage
                     count = segment_counts[segment_name]
