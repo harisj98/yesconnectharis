@@ -4559,13 +4559,6 @@ def main():
         network_fig = plot_network_graph(df_filtered)
         st.plotly_chart(network_fig, use_container_width=True)
         
-        # Connection distribution
-        st.subheader("Connection Distribution")
-        
-        connection_fig = px.histogram(df_filtered, x='total_friend_count',
-                                     title='Distribution of Connection Counts',
-                                     nbins=50)
-        st.plotly_chart(connection_fig, use_container_width=True)
            
     with tab4:
         st.title("Predictive Models")
