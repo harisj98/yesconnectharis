@@ -4359,14 +4359,38 @@ def main():
         df_filtered = df
     
     # Country filter
-    countries = sorted(df['Country'].unique())
+    if 'enable_country_standardization' in st.session_state and st.session_state['enable_country_standardization']:
+        # Use standardized data for filtering too
+        if 'df_standardized' in st.session_state:
+            # Create a filtered version of the standardized dataframe
+            df_standardized = st.session_state['df_standardized']
+            # Apply date filter to standardized data
+            if len(date_range) == 2:
+                df_standardized_filtered = df_standardized[(df_standardized['last_login_date'].dt.date >= start_date) & 
+                                                         (df_standardized['last_login_date'].dt.date <= end_date)]
+            else:
+                df_standardized_filtered = df_standardized
+                
+            # Get the standardized country list for filters
+            countries = sorted(df_standardized_filtered['Country'].unique())
+            
+            # Use the standardized filtered data instead of original
+            df_filtered = df_standardized_filtered
+        else:
+            countries = sorted(df_filtered['Country'].unique())
+    else:
+        # Use original country data
+        countries = sorted(df_filtered['Country'].unique())
+
+    # Country filter - this part stays mostly the same
     selected_countries = st.sidebar.multiselect(
         "Select Countries",
         options=countries,
         default=st.session_state['country_filter']
     )
-    
+
     if selected_countries:
+        # Apply country filter
         df_filtered = df_filtered[df_filtered['Country'].isin(selected_countries)]
         st.session_state['country_filter'] = selected_countries
     
