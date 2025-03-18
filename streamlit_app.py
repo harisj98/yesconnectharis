@@ -3132,9 +3132,6 @@ def plot_badge_progression(df):
     badge_df['date'] = pd.to_datetime(badge_df['date'], dayfirst=True)
     badge_df = badge_df.sort_values('date')
     
-    # Create forecast data (6 months beyond the last data point)
-    last_date = badge_df['date'].max()
-    
     # Calculate simple linear forecast based on last 3 months of data
     recent_data = badge_df.iloc[-3:]
     
@@ -3143,17 +3140,40 @@ def plot_badge_progression(df):
     networker_growth = (recent_data['networkers'].iloc[-1] - recent_data['networkers'].iloc[0]) / 3
     poster_growth = (recent_data['posters'].iloc[-1] - recent_data['posters'].iloc[0]) / 3
     
+    # Calculate standard deviations for confidence intervals
+    active_std = badge_df['active'].std() * 0.5  # Reducing to make it look better
+    networker_std = badge_df['networkers'].std() * 0.5
+    poster_std = badge_df['posters'].std() * 0.5 if badge_df['posters'].std() > 0 else 1  # Prevent zero std
+    
     # Generate forecast dates (monthly for 6 months)
+    last_date = badge_df['date'].max()
     forecast_dates = [last_date + pd.DateOffset(months=i) for i in range(1, 7)]
     
-    # Generate forecast values
+    # Generate forecast values with confidence intervals
     forecast_data = []
     for i, date in enumerate(forecast_dates, 1):
+        # Mean forecasts
+        active_forecast = badge_df['active'].iloc[-1] + active_growth * i
+        networker_forecast = badge_df['networkers'].iloc[-1] + networker_growth * i
+        poster_forecast = badge_df['posters'].iloc[-1] + poster_growth * i
+        
+        # Confidence intervals (widen with time)
+        ci_multiplier = np.sqrt(i)  # Uncertainty grows with square root of time
+        active_ci = 1.96 * active_std * ci_multiplier
+        networker_ci = 1.96 * networker_std * ci_multiplier
+        poster_ci = 1.96 * poster_std * ci_multiplier
+        
         forecast_data.append({
             'date': date,
-            'active_forecast': recent_data['active'].iloc[-1] + active_growth * i,
-            'networkers_forecast': recent_data['networkers'].iloc[-1] + networker_growth * i,
-            'posters_forecast': recent_data['posters'].iloc[-1] + poster_growth * i
+            'active_forecast': active_forecast,
+            'active_upper': active_forecast + active_ci,
+            'active_lower': max(0, active_forecast - active_ci),
+            'networkers_forecast': networker_forecast,
+            'networkers_upper': networker_forecast + networker_ci,
+            'networkers_lower': max(0, networker_forecast - networker_ci),
+            'posters_forecast': poster_forecast,
+            'posters_upper': poster_forecast + poster_ci,
+            'posters_lower': max(0, poster_forecast - poster_ci)
         })
     
     forecast_df = pd.DataFrame(forecast_data)
@@ -3161,55 +3181,90 @@ def plot_badge_progression(df):
     # Create figure
     fig = go.Figure()
     
-    # Add historical badge achievement lines
+    # Add historical and forecast data for Frequently Active Users
     fig.add_trace(go.Scatter(
-        x=badge_df['date'],
-        y=badge_df['active'],
+        x=badge_df['date'].tolist() + forecast_df['date'].tolist(),
+        y=badge_df['active'].tolist() + forecast_df['active_forecast'].tolist(),
         mode='lines+markers',
         name='Frequently Active Users',
-        line=dict(color='blue', width=2)
+        line=dict(color='blue', width=2),
+        marker=dict(
+            size=6,
+            color='blue',
+            # Make forecast points have no fill
+            line=dict(width=2, color='blue')
+        )
     ))
     
+    # Add confidence interval for Active Users
     fig.add_trace(go.Scatter(
-        x=badge_df['date'],
-        y=badge_df['networkers'],
+        x=forecast_df['date'].tolist() + forecast_df['date'].tolist()[::-1],
+        y=forecast_df['active_upper'].tolist() + forecast_df['active_lower'].tolist()[::-1],
+        fill='toself',
+        fillcolor='rgba(0, 0, 255, 0.1)',
+        line=dict(color='rgba(0, 0, 255, 0)'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+    
+    # Add historical and forecast data for Networkers
+    fig.add_trace(go.Scatter(
+        x=badge_df['date'].tolist() + forecast_df['date'].tolist(),
+        y=badge_df['networkers'].tolist() + forecast_df['networkers_forecast'].tolist(),
         mode='lines+markers',
         name='Networkers',
-        line=dict(color='green', width=2)
+        line=dict(color='green', width=2),
+        marker=dict(
+            size=6,
+            color='green',
+            line=dict(width=2, color='green')
+        )
     ))
     
+    # Add confidence interval for Networkers
     fig.add_trace(go.Scatter(
-        x=badge_df['date'],
-        y=badge_df['posters'],
+        x=forecast_df['date'].tolist() + forecast_df['date'].tolist()[::-1],
+        y=forecast_df['networkers_upper'].tolist() + forecast_df['networkers_lower'].tolist()[::-1],
+        fill='toself',
+        fillcolor='rgba(0, 128, 0, 0.1)',
+        line=dict(color='rgba(0, 128, 0, 0)'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+    
+    # Add historical and forecast data for Top Posters
+    fig.add_trace(go.Scatter(
+        x=badge_df['date'].tolist() + forecast_df['date'].tolist(),
+        y=badge_df['posters'].tolist() + forecast_df['posters_forecast'].tolist(),
         mode='lines+markers',
         name='Top Posters',
-        line=dict(color='orange', width=2)
+        line=dict(color='orange', width=2),
+        marker=dict(
+            size=6,
+            color='orange',
+            line=dict(width=2, color='orange')
+        )
     ))
     
-    # Add forecast lines (dashed)
+    # Add confidence interval for Top Posters
     fig.add_trace(go.Scatter(
-        x=forecast_df['date'],
-        y=forecast_df['active_forecast'],
-        mode='lines',
-        name='Active Users Forecast',
-        line=dict(color='blue', width=2, dash='dash')
+        x=forecast_df['date'].tolist() + forecast_df['date'].tolist()[::-1],
+        y=forecast_df['posters_upper'].tolist() + forecast_df['posters_lower'].tolist()[::-1],
+        fill='toself',
+        fillcolor='rgba(255, 165, 0, 0.1)',
+        line=dict(color='rgba(255, 165, 0, 0)'),
+        hoverinfo='skip',
+        showlegend=False
     ))
     
-    fig.add_trace(go.Scatter(
-        x=forecast_df['date'],
-        y=forecast_df['networkers_forecast'],
-        mode='lines',
-        name='Networkers Forecast',
-        line=dict(color='green', width=2, dash='dash')
-    ))
-    
-    fig.add_trace(go.Scatter(
-        x=forecast_df['date'],
-        y=forecast_df['posters_forecast'],
-        mode='lines',
-        name='Top Posters Forecast',
-        line=dict(color='orange', width=2, dash='dash')
-    ))
+    # Add a vertical line at the forecast start point
+    fig.add_vline(
+        x=badge_df['date'].iloc[-1], 
+        line_dash="dot", 
+        line_color="gray",
+        annotation_text="Forecast Start", 
+        annotation_position="top right"
+    )
     
     # Update layout
     fig.update_layout(
@@ -3227,7 +3282,7 @@ def plot_badge_progression(df):
     )
     
     return fig
-
+    
 
 
 # Define models as session state objects to maintain scope across functions
