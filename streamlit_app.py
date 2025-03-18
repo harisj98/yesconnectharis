@@ -3145,9 +3145,11 @@ def plot_badge_progression(df):
     networker_std = badge_df['networkers'].std() * 0.5
     poster_std = badge_df['posters'].std() * 0.5 if badge_df['posters'].std() > 0 else 1  # Prevent zero std
     
-    # Generate forecast dates (monthly for 6 months)
+    # Generate forecast dates (monthly for 6 months) - FIXED VERSION
     last_date = badge_df['date'].max()
-    forecast_dates = [last_date + pd.DateOffset(months=i) for i in range(1, 7)]
+    forecast_dates = []
+    for i in range(1, 7):
+        forecast_dates.append(last_date + pd.DateOffset(months=i))
     
     # Generate forecast values with confidence intervals
     forecast_data = []
@@ -3181,19 +3183,23 @@ def plot_badge_progression(df):
     # Create figure
     fig = go.Figure()
     
-    # Add historical and forecast data for Frequently Active Users
+    # Create continuous line for Frequently Active Users
     fig.add_trace(go.Scatter(
         x=badge_df['date'].tolist() + forecast_df['date'].tolist(),
         y=badge_df['active'].tolist() + forecast_df['active_forecast'].tolist(),
-        mode='lines+markers',
+        mode='lines',
         name='Frequently Active Users',
-        line=dict(color='blue', width=2),
-        marker=dict(
-            size=6,
-            color='blue',
-            # Make forecast points have no fill
-            line=dict(width=2, color='blue')
-        )
+        line=dict(color='blue', width=2)
+    ))
+    
+    # Add markers only for historical data
+    fig.add_trace(go.Scatter(
+        x=badge_df['date'],
+        y=badge_df['active'],
+        mode='markers',
+        marker=dict(color='blue', size=8),
+        showlegend=False,
+        hoverinfo='skip'
     ))
     
     # Add confidence interval for Active Users
@@ -3207,18 +3213,23 @@ def plot_badge_progression(df):
         showlegend=False
     ))
     
-    # Add historical and forecast data for Networkers
+    # Create continuous line for Networkers
     fig.add_trace(go.Scatter(
         x=badge_df['date'].tolist() + forecast_df['date'].tolist(),
         y=badge_df['networkers'].tolist() + forecast_df['networkers_forecast'].tolist(),
-        mode='lines+markers',
+        mode='lines',
         name='Networkers',
-        line=dict(color='green', width=2),
-        marker=dict(
-            size=6,
-            color='green',
-            line=dict(width=2, color='green')
-        )
+        line=dict(color='green', width=2)
+    ))
+    
+    # Add markers only for historical data
+    fig.add_trace(go.Scatter(
+        x=badge_df['date'],
+        y=badge_df['networkers'],
+        mode='markers',
+        marker=dict(color='green', size=8),
+        showlegend=False,
+        hoverinfo='skip'
     ))
     
     # Add confidence interval for Networkers
@@ -3232,18 +3243,23 @@ def plot_badge_progression(df):
         showlegend=False
     ))
     
-    # Add historical and forecast data for Top Posters
+    # Create continuous line for Top Posters
     fig.add_trace(go.Scatter(
         x=badge_df['date'].tolist() + forecast_df['date'].tolist(),
         y=badge_df['posters'].tolist() + forecast_df['posters_forecast'].tolist(),
-        mode='lines+markers',
+        mode='lines',
         name='Top Posters',
-        line=dict(color='orange', width=2),
-        marker=dict(
-            size=6,
-            color='orange',
-            line=dict(width=2, color='orange')
-        )
+        line=dict(color='orange', width=2)
+    ))
+    
+    # Add markers only for historical data
+    fig.add_trace(go.Scatter(
+        x=badge_df['date'],
+        y=badge_df['posters'],
+        mode='markers',
+        marker=dict(color='orange', size=8),
+        showlegend=False,
+        hoverinfo='skip'
     ))
     
     # Add confidence interval for Top Posters
@@ -3265,6 +3281,23 @@ def plot_badge_progression(df):
         annotation_text="Forecast Start", 
         annotation_position="top right"
     )
+    
+    # Make forecast line dashed
+    for i in range(0, 9, 3):  # Three main traces
+        fig.data[i].line.dash = 'solid'  # Historical parts solid
+        
+        # Add a dashed line for forecast part only
+        fig.add_trace(go.Scatter(
+            x=forecast_df['date'],
+            y=forecast_df['active_forecast' if i==0 else 'networkers_forecast' if i==3 else 'posters_forecast'],
+            mode='lines',
+            line=dict(
+                color='blue' if i==0 else 'green' if i==3 else 'orange',
+                width=2,
+                dash='dash'
+            ),
+            showlegend=False
+        ))
     
     # Update layout
     fig.update_layout(
