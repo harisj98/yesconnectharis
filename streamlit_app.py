@@ -2539,6 +2539,12 @@ def trend_analysis_tab(df):
         )
         
         trend_subtab2.plotly_chart(profile_career_fig, use_container_width=True)
+
+
+
+    with trend_subtab3:
+        # Add this section to implement Market Opportunities
+        create_market_opportunity_analysis(df, trend_subtab3)
         
 
 
