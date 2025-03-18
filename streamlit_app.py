@@ -6033,6 +6033,7 @@ def main():
                     st.session_state['df_standardized'] = df_standardized
                     st.session_state['enable_country_standardization'] = True
                     st.success("✅ Country name standardization enabled! All dashboard analysis will use standardized country names.")
+                    st.experimental_rerun()
                     
                     # Show a sample of the standardized data
                     st.subheader("Sample of Standardized Data")
