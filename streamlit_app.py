@@ -165,15 +165,15 @@ def load_data():
         # Option 1: Direct relative path (most likely to work on Streamlit Cloud)
         if os.path.exists("data/2024 sample.csv"):
             data_path = "data/2024 sample.csv"
-            st.sidebar.success(f"Found data file at: {data_path}")
+            st.sidebar.success(f"Loaded data")
         # Option 2: Path from script location
         elif os.path.exists(str(Path(__file__).parent / "data" / "2024 sample.csv")):
             data_path = str(Path(__file__).parent / "data" / "2024 sample.csv")
-            st.sidebar.success(f"Found data file at: {data_path}")
+            st.sidebar.success(f"Loaded data")
         # Option 3: Try with underscore instead of space
         elif os.path.exists("data/2024_sample.csv"):
             data_path = "data/2024_sample.csv"
-            st.sidebar.success(f"Found data file at: {data_path}")
+            st.sidebar.success(f"Loaded data")
         else:
             st.sidebar.error("Could not find data file")
             # Creating a small sample dataset to prevent errors
