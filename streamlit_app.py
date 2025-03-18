@@ -1628,22 +1628,26 @@ def plot_model_performance(model_type, X_test, y_test):
 
 # Functions for network graph
 def plot_geographic_distribution(df):
-    # Simple check if standardization is enabled and available
-    if 'enable_country_standardization' in st.session_state and st.session_state['enable_country_standardization'] and 'df_standardized' in st.session_state:
-        # Use only the standardized country data from the stored standardized dataframe
-        # This minimizes changes to other parts of the code
-        country_counts = st.session_state['df_standardized']['Country'].value_counts().reset_index()
+    """
+    Create a geographic distribution plot using standardized country data when enabled.
+    """
+    # Check if standardization is enabled and available in session state
+    if 'enable_country_standardization' in st.session_state and st.session_state['enable_country_standardization']:
+        # Use standardized data from session state
+        df_to_use = st.session_state['df_standardized']
     else:
-        # Original code path - unchanged
-        country_counts = df['Country'].value_counts().reset_index()
-        
+        # Use original data
+        df_to_use = df
+    
+    # Calculate country counts and percentages using the selected dataframe
+    country_counts = df_to_use['Country'].value_counts().reset_index()
     country_counts.columns = ['Country', 'Count']
     
-    # Calculate percentages (original code)
-    total_users = len(df)
+    # Calculate percentages for business context
+    total_users = len(df_to_use)
     country_counts['Percentage'] = (country_counts['Count'] / total_users * 100).round(2)
     
-    # Create a simple but effective choropleth map (original code)
+    # Create a simple but effective choropleth map
     fig = px.choropleth(
         country_counts, 
         locations='Country', 
@@ -1655,23 +1659,26 @@ def plot_geographic_distribution(df):
             'Percentage': ':.2f%',
             'Country': False
         },
-        # Rest of your original visualization code remains unchanged
+        # Simple purple color scheme with clear contrast
         color_continuous_scale=[
-            [0, "#f8edff"],
-            [0.25, "#e3c4ff"],
-            [0.5, "#c18eff"],
-            [0.75, "#9040ff"],
-            [1, "#5c00e6"]
+            [0, "#f8edff"],      # Very light purple
+            [0.25, "#e3c4ff"],   # Light purple
+            [0.5, "#c18eff"],    # Medium purple
+            [0.75, "#9040ff"],   # Dark purple
+            [1, "#5c00e6"]       # Very dark purple
         ],
+        # Set explicit range to make the colors correspond to actual values
         range_color=[0, max(country_counts['Percentage'].max() * 1.1, 20)],
-        projection='natural earth'
+        projection='natural earth'  # Simple, clean projection
     )
     
-    # Original layout code remains unchanged
+    # Clean, business-focused layout
     fig.update_layout(
         height=600,
         title={
-            'text': 'Customer Distribution by Country (% of Total)',
+            'text': 'Customer Distribution by Country (% of Total)' + 
+                   (' - Standardized' if 'enable_country_standardization' in st.session_state and 
+                                         st.session_state['enable_country_standardization'] else ''),
             'font': {'size': 20},
             'x': 0.5,
             'y': 0.95
@@ -1688,13 +1695,14 @@ def plot_geographic_distribution(df):
             'landcolor': 'rgb(243, 243, 243)',
             'countrycolor': 'rgb(204, 204, 204)',
             'coastlinecolor': 'rgb(204, 204, 204)',
-            'projection_scale': 1.1
+            'projection_scale': 1.1  # Slightly larger scale to fill the space
         }
     )
     
-    # Original top countries summary box code remains unchanged
+    # Add top countries summary box
     top_countries = country_counts.sort_values('Percentage', ascending=False).head(3)
-    summary_text = "<b>Top Countries:</b><br>"
+    summary_text = "<b>Top Countries" + (" (Standardized)" if 'enable_country_standardization' in st.session_state and 
+                                                             st.session_state['enable_country_standardization'] else "") + ":</b><br>"
     for i, row in enumerate(top_countries.itertuples()):
         summary_text += f"{i+1}. {row.Country}: {row.Percentage:.2f}%<br>"
     
@@ -1714,7 +1722,6 @@ def plot_geographic_distribution(df):
     )
     
     return fig
-
 
 
 
