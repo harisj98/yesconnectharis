@@ -3109,43 +3109,126 @@ def plot_industry_region_network(df):
 
 
 def plot_badge_progression(df):
-    # Calculate badge achievement over time
-    date_range = pd.date_range(start=df['last_login_date'].min(), end=df['last_login_date'].max(), freq='M')
-    badge_progression = []
+    """Plot badge achievement over time with hard-coded values and forecast."""
+    # Hard-coded data from the provided values
+    data = [
+        {"date": "15/11/2023", "active": 253, "networkers": 75, "posters": 0},
+        {"date": "22/11/2023", "active": 293, "networkers": 86, "posters": 0},
+        {"date": "07/12/2023", "active": 304, "networkers": 88, "posters": 0},
+        {"date": "22/01/2024", "active": 322, "networkers": 89, "posters": 2},
+        {"date": "12/02/2024", "active": 325, "networkers": 89, "posters": 2},
+        {"date": "11/03/2024", "active": 486, "networkers": 139, "posters": 5},
+        {"date": "04/04/2024", "active": 739, "networkers": 210, "posters": 5},
+        {"date": "17/04/2024", "active": 852, "networkers": 215, "posters": 5},
+        {"date": "24/04/2024", "active": 876, "networkers": 217, "posters": 5},
+        {"date": "13/05/2024", "active": 966, "networkers": 218, "posters": 5},
+        {"date": "17/07/2024", "active": 1031, "networkers": 222, "posters": 6},
+        {"date": "05/08/2024", "active": 1042, "networkers": 222, "posters": 6},
+        {"date": "13/01/2025", "active": 1074, "networkers": 223, "posters": 6}
+    ]
     
-    # These calculations would be based on your actual badge criteria
-    for date in date_range:
-        users_until_date = df[df['last_login_date'] <= date]
-        
-        # Criteria from your requirements
-        active_badge = len(users_until_date[
-            (users_until_date['profile_completion'] == 1)
-        ])
-        
-        networker_badge = len(users_until_date[
-            (users_until_date['profile_completion'] == 1) & 
-            (users_until_date['total_friend_count'] >= 10)
-        ])
-        
-        # For top poster, we don't have post data, so this is a placeholder
-        top_poster_badge = len(users_until_date[
-            (users_until_date['profile_completion'] == 1) & 
-            (users_until_date['total_friend_count'] >= 10)
-        ])
-        
-        badge_progression.append({
-            'Date': date,
-            'Frequently Active Users': active_badge,
-            'Networkers': networker_badge,
-            'Top Posters': top_poster_badge
+    # Convert to DataFrame
+    badge_df = pd.DataFrame(data)
+    badge_df['date'] = pd.to_datetime(badge_df['date'], dayfirst=True)
+    badge_df = badge_df.sort_values('date')
+    
+    # Create forecast data (6 months beyond the last data point)
+    last_date = badge_df['date'].max()
+    
+    # Calculate simple linear forecast based on last 3 months of data
+    recent_data = badge_df.iloc[-3:]
+    
+    # Calculate monthly growth rates
+    active_growth = (recent_data['active'].iloc[-1] - recent_data['active'].iloc[0]) / 3
+    networker_growth = (recent_data['networkers'].iloc[-1] - recent_data['networkers'].iloc[0]) / 3
+    poster_growth = (recent_data['posters'].iloc[-1] - recent_data['posters'].iloc[0]) / 3
+    
+    # Generate forecast dates (monthly for 6 months)
+    forecast_dates = [last_date + pd.DateOffset(months=i) for i in range(1, 7)]
+    
+    # Generate forecast values
+    forecast_data = []
+    for i, date in enumerate(forecast_dates, 1):
+        forecast_data.append({
+            'date': date,
+            'active_forecast': recent_data['active'].iloc[-1] + active_growth * i,
+            'networkers_forecast': recent_data['networkers'].iloc[-1] + networker_growth * i,
+            'posters_forecast': recent_data['posters'].iloc[-1] + poster_growth * i
         })
     
-    badge_df = pd.DataFrame(badge_progression)
+    forecast_df = pd.DataFrame(forecast_data)
     
-    fig = px.line(badge_df, x='Date', y=['Frequently Active Users', 'Networkers', 'Top Posters'],
-                 title='Badge Achievement Over Time')
+    # Create figure
+    fig = go.Figure()
+    
+    # Add historical badge achievement lines
+    fig.add_trace(go.Scatter(
+        x=badge_df['date'],
+        y=badge_df['active'],
+        mode='lines+markers',
+        name='Frequently Active Users',
+        line=dict(color='blue', width=2)
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=badge_df['date'],
+        y=badge_df['networkers'],
+        mode='lines+markers',
+        name='Networkers',
+        line=dict(color='green', width=2)
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=badge_df['date'],
+        y=badge_df['posters'],
+        mode='lines+markers',
+        name='Top Posters',
+        line=dict(color='orange', width=2)
+    ))
+    
+    # Add forecast lines (dashed)
+    fig.add_trace(go.Scatter(
+        x=forecast_df['date'],
+        y=forecast_df['active_forecast'],
+        mode='lines',
+        name='Active Users Forecast',
+        line=dict(color='blue', width=2, dash='dash')
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=forecast_df['date'],
+        y=forecast_df['networkers_forecast'],
+        mode='lines',
+        name='Networkers Forecast',
+        line=dict(color='green', width=2, dash='dash')
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=forecast_df['date'],
+        y=forecast_df['posters_forecast'],
+        mode='lines',
+        name='Top Posters Forecast',
+        line=dict(color='orange', width=2, dash='dash')
+    ))
+    
+    # Update layout
+    fig.update_layout(
+        title='Badge Achievement Over Time (with 6-month Forecast)',
+        xaxis_title='Date',
+        yaxis_title='Number of Users',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        hovermode='x unified'
+    )
     
     return fig
+
+
 
 # Define models as session state objects to maintain scope across functions
 if 'engagement_model' not in st.session_state:
