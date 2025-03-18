@@ -2440,24 +2440,43 @@ def trend_analysis_tab(df):
         trend_subtab2.plotly_chart(day_fig, use_container_width=True)
               
         # Profile completion analysis
-        trend_subtab2.subheader("Profile Completion Analysis")
-        
-        # Calculate profile completion metrics
-        profile_completion_rate = df['profile_completion'].mean() * 100
-        
-        # Profile completion by career level
-        profile_by_career = df.groupby('Career Level')['profile_completion'].mean().sort_values(ascending=False).reset_index()
-        profile_by_career['Completion Rate'] = profile_by_career['profile_completion'] * 100
-        
-        profile_career_fig = px.bar(
-            profile_by_career,
-            x='Career Level',
-            y='Completion Rate',
-            title='Profile Completion Rate by Career Level',
-            labels={'Completion Rate': 'Completion Rate (%)'}
+        trend_subtab2.subheader("Profile Completion Over Time by Career Level")
+
+        # Ensure last_login_date is datetime
+        df['last_login_date'] = pd.to_datetime(df['last_login_date'])
+
+        # Group by month and career level, calculate profile completion rate
+        profile_by_time_career = df.groupby([
+            pd.Grouper(key='last_login_date', freq='M'), 
+            'Career Level'
+        ])['profile_completion'].mean().reset_index()
+
+        # Pivot the data for plotting
+        profile_pivot = profile_by_time_career.pivot(
+            index='last_login_date', 
+            columns='Career Level', 
+            values='profile_completion'
+        ) * 100  # Convert to percentage
+
+        # Create line plot
+        fig = px.line(
+            profile_pivot,
+            title='Profile Completion Rate by Career Level Over Time',
+            labels={'value': 'Profile Completion (%)', 'last_login_date': 'Date'},
         )
-        
-        trend_subtab2.plotly_chart(profile_career_fig, use_container_width=True)
+
+        # Customize layout
+        fig.update_layout(
+            xaxis_title='Date',
+            yaxis_title='Profile Completion (%)',
+            legend_title='Career Level',
+            hovermode='x unified'
+        )
+
+        # Add markers to the lines
+        fig.update_traces(mode='lines+markers')
+
+        trend_subtab2.plotly_chart(fig, use_container_width=True)
 
 
 
