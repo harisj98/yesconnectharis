@@ -4282,6 +4282,8 @@ def forecasting_tab(df):
                 
                 monthly_forecast['month'] = monthly_forecast['month'].astype(str)
                 monthly_forecast['growth'] = monthly_forecast['yhat'].pct_change() * 100
+
+                monthly_forecast = monthly_forecast[monthly_forecast['month_date'] >= pd.to_datetime('2023-10-01')]
                 
                 # Plot growth rate
                 growth_fig = px.bar(
