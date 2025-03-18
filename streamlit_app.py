@@ -2482,83 +2482,206 @@ def trend_analysis_tab(df):
             
             trend_subtab1.plotly_chart(fig, use_container_width=True)
     
-    with trend_subtab2:
-        # Your existing engagement patterns analysis code
-        # Add any existing visualizations and analyses for engagement patterns here
-        trend_subtab2.header("User Engagement Patterns")
+with trend_subtab2:
+        trend_subtab2.title("User Engagement Analysis")
         
-        # Example: Login day of week distribution
+        # Engagement metrics over time
+        trend_subtab2.subheader("Engagement Metrics Over Time")
+        engagement_fig = plot_engagement_metrics(df)
+        trend_subtab2.plotly_chart(engagement_fig, use_container_width=True)
+        
+        # Platform usage
+        platform_counts = df['platform'].value_counts().reset_index()
+        platform_counts.columns = ['Platform', 'Count']
+        
+        trend_subtab2.subheader("Platform Usage")
+        platform_fig = px.pie(platform_counts, values='Count', names='Platform',
+                             title='User Distribution by Platform')
+        trend_subtab2.plotly_chart(platform_fig, use_container_width=True)
+        
+        # User activity patterns
+        trend_subtab2.subheader("User Activity Patterns")
+        
+        # Login day of week
         df['login_day'] = df['last_login_date'].dt.day_name()
         day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         day_counts = df['login_day'].value_counts().reindex(day_order).reset_index()
         day_counts.columns = ['Day', 'Count']
         
-        # Create a bar chart for day of week distribution
-        fig = px.bar(
-            day_counts,
-            x='Day',
-            y='Count',
-            title='Login Activity by Day of Week',
-            color_discrete_sequence=['#1f77b4']
+        day_fig = px.bar(day_counts, x='Day', y='Count', title='Login Activity by Day of Week')
+        trend_subtab2.plotly_chart(day_fig, use_container_width=True)
+        
+        # Distribution of connection counts
+        trend_subtab2.subheader("Connection Distribution")
+        
+        connection_fig = px.histogram(df, 
+                                    x='total_friend_count',
+                                    title='Distribution of Connection Counts',
+                                    nbins=50)
+        trend_subtab2.plotly_chart(connection_fig, use_container_width=True)
+        
+        # Profile completion analysis
+        trend_subtab2.subheader("Profile Completion Analysis")
+        
+        # Calculate profile completion metrics
+        profile_completion_rate = df['profile_completion'].mean() * 100
+        
+        # Profile completion by career level
+        profile_by_career = df.groupby('Career Level')['profile_completion'].mean().sort_values(ascending=False).reset_index()
+        profile_by_career['Completion Rate'] = profile_by_career['profile_completion'] * 100
+        
+        profile_career_fig = px.bar(
+            profile_by_career,
+            x='Career Level',
+            y='Completion Rate',
+            title='Profile Completion Rate by Career Level',
+            labels={'Completion Rate': 'Completion Rate (%)'}
         )
         
-        trend_subtab2.plotly_chart(fig, use_container_width=True)
+        trend_subtab2.plotly_chart(profile_career_fig, use_container_width=True)
         
-        # Example: Time of day analysis
-        if 'last_login_time' in df.columns:
-            df['login_hour'] = df['last_login_date'].dt.hour
-            hour_counts = df.groupby('login_hour').size().reset_index()
-            hour_counts.columns = ['Hour', 'Count']
+        # Profile completion by country
+        profile_by_country = df.groupby('Country')['profile_completion'].mean().sort_values(ascending=False).head(10).reset_index()
+        profile_by_country['Completion Rate'] = profile_by_country['profile_completion'] * 100
+        
+        profile_country_fig = px.bar(
+            profile_by_country,
+            x='Country',
+            y='Completion Rate',
+            title='Top 10 Countries by Profile Completion Rate',
+            labels={'Completion Rate': 'Completion Rate (%)'}
+        )
+        
+        trend_subtab2.plotly_chart(profile_country_fig, use_container_width=True)
+        
+        # User retention analysis
+        trend_subtab2.subheader("User Retention Analysis")
+        
+        # Create retention cohorts if we have enough date range
+        if df['last_login_date'].max() - df['last_login_date'].min() > pd.Timedelta(days=90):
+            # Create month cohorts
+            df['cohort_month'] = df['last_login_date'].dt.to_period('M')
             
-            # Create a line chart for time of day distribution
-            fig = px.line(
-                hour_counts,
-                x='Hour',
-                y='Count',
-                title='Login Activity by Hour of Day',
-                markers=True
-            )
+            # Calculate retention by cohort
+            cohort_data = []
+            cohorts = sorted(df['cohort_month'].unique())
             
-            fig.update_layout(
-                xaxis=dict(
-                    tickmode='array',
-                    tickvals=list(range(0, 24, 2)),
-                    ticktext=[f"{h:02d}:00" for h in range(0, 24, 2)]
+            for i, cohort in enumerate(cohorts[:-3]):  # Skip last 3 months for retention calculation
+                cohort_users = df[df['cohort_month'] == cohort]
+                cohort_user_ids = set(cohort_users.index)
+                
+                # Calculate retention for each month after cohort
+                for j, month in enumerate(cohorts[i:i+4]):
+                    if j > 0:  # Skip the cohort month itself
+                        month_active_users = set(df[df['cohort_month'] == month].index)
+                        retained_users = len(cohort_user_ids.intersection(month_active_users))
+                        retention_rate = retained_users / len(cohort_user_ids) * 100 if len(cohort_user_ids) > 0 else 0
+                        
+                        cohort_data.append({
+                            'Cohort': str(cohort),
+                            'Month': j,
+                            'Retention Rate': retention_rate
+                        })
+            
+            # Create cohort retention heatmap
+            if cohort_data:
+                cohort_df = pd.DataFrame(cohort_data)
+                cohort_pivot = cohort_df.pivot(index='Cohort', columns='Month', values='Retention Rate')
+                
+                cohort_fig = px.imshow(
+                    cohort_pivot,
+                    labels=dict(x="Months After Joining", y="Cohort", color="Retention Rate (%)"),
+                    x=cohort_pivot.columns,
+                    y=cohort_pivot.index,
+                    color_continuous_scale="Blues",
+                    title="User Retention by Monthly Cohort"
                 )
-            )
-            
-            trend_subtab2.plotly_chart(fig, use_container_width=True)
+                
+                cohort_fig.update_layout(
+                    xaxis_title="Months After Joining",
+                    yaxis_title="Cohort Month",
+                    coloraxis_colorbar=dict(title="Retention Rate (%)")
+                )
+                
+                trend_subtab2.plotly_chart(cohort_fig, use_container_width=True)
+            else:
+                trend_subtab2.info("Insufficient cohort data for retention analysis.")
+        else:
+            trend_subtab2.info("Insufficient date range for cohort retention analysis.")
         
-        # Example: Session duration distribution (if available)
-        if 'session_duration' in df.columns:
-            # Create a histogram for session duration
-            fig = px.histogram(
-                df,
-                x='session_duration',
-                nbins=20,
-                title='Session Duration Distribution',
-                labels={'session_duration': 'Session Duration (minutes)'}
-            )
-            
-            trend_subtab2.plotly_chart(fig, use_container_width=True)
+        # Activity segments
+        trend_subtab2.subheader("User Activity Segments")
         
-        # Example: Platform usage comparison
-        if 'platform' in df.columns or 'App' in df.columns:
-            platform_col = 'platform' if 'platform' in df.columns else 'App'
-            platform_counts = df[platform_col].value_counts().reset_index()
-            platform_counts.columns = ['Platform', 'Count']
-            
-            # Create a pie chart for platform distribution
-            fig = px.pie(
-                platform_counts,
-                values='Count',
-                names='Platform',
-                title='Platform Usage Distribution'
-            )
-            
-            trend_subtab2.plotly_chart(fig, use_container_width=True)
+        # Define activity segments
+        df['activity_segment'] = pd.cut(
+            df['days_since_login'],
+            bins=[0, 7, 30, 90, float('inf')],
+            labels=['Active (7d)', 'Active (30d)', 'Occasional (90d)', 'Inactive']
+        )
         
-        # Feature usage patterns (example)
+        # Calculate segment sizes
+        activity_segments = df['activity_segment'].value_counts().reset_index()
+        activity_segments.columns = ['Segment', 'Count']
+        
+        # Calculate percentages
+        activity_segments['Percentage'] = activity_segments['Count'] / activity_segments['Count'].sum() * 100
+        
+        # Create pie chart
+        activity_fig = px.pie(
+            activity_segments,
+            values='Count',
+            names='Segment',
+            title='User Activity Segments',
+            color_discrete_sequence=px.colors.sequential.Blues_r
+        )
+        
+        trend_subtab2.plotly_chart(activity_fig, use_container_width=True)
+        
+        # Cross-country connections
+        trend_subtab2.subheader("Regional Network Strength")
+        # Create country pairs for network strength analysis
+        country_pairs = []
+        countries_list = df['Country'].unique().tolist()
+        
+        for i, country1 in enumerate(countries_list):
+            users_country1 = len(df[df['Country'] == country1])
+            
+            for country2 in countries_list[i+1:]:
+                users_country2 = len(df[df['Country'] == country2])
+                
+                # Simulate connection strength 
+                connection_strength = min(users_country1, users_country2)
+                
+                country_pairs.append({
+                    'Country1': country1,
+                    'Country2': country2,
+                    'ConnectionStrength': connection_strength
+                })
+        
+        country_pair_df = pd.DataFrame(country_pairs)
+        
+        if len(country_pair_df) > 0:
+            try:
+                heatmap_data = pd.pivot_table(
+                    country_pair_df, 
+                    values='ConnectionStrength',
+                    index='Country1',
+                    columns='Country2',
+                    fill_value=0
+                )
+                
+                heatmap_fig = px.imshow(heatmap_data,
+                                       labels=dict(x="Country", y="Country", color="Connection Strength"),
+                                       title="Cross-Country Connection Strength")
+                
+                trend_subtab2.plotly_chart(heatmap_fig, use_container_width=True)
+            except Exception as e:
+                trend_subtab2.write("Error generating heatmap:", e)
+                trend_subtab2.write("Not enough country data for cross-country analysis")
+        else:
+            trend_subtab2.write("Not enough country data for cross-country analysis")
+        
+        # Feature usage patterns
         trend_subtab2.subheader("Feature Usage Analysis")
         trend_subtab2.markdown("""
         This analysis examines which features are most frequently used by members.
@@ -2587,10 +2710,6 @@ def trend_analysis_tab(df):
         )
         
         trend_subtab2.plotly_chart(fig, use_container_width=True)
-    
-    with trend_subtab3:
-        # Call the market opportunity analysis function with the sub-tab as parent
-        create_market_opportunity_analysis(df, parent_tab=trend_subtab3)
         
 
 def prepare_forecast_data(data):
