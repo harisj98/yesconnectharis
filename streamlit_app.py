@@ -4566,51 +4566,7 @@ def main():
                                      title='Distribution of Connection Counts',
                                      nbins=50)
         st.plotly_chart(connection_fig, use_container_width=True)
-        
-        # Cross-country connections
-        st.subheader("Regional Network Strength")
-        # Create country pairs for network strength analysis
-        country_pairs = []
-        countries_list = df_filtered['Country'].unique().tolist()
-        
-        for i, country1 in enumerate(countries_list):
-            users_country1 = len(df_filtered[df_filtered['Country'] == country1])
-            
-            for country2 in countries_list[i+1:]:
-                users_country2 = len(df_filtered[df_filtered['Country'] == country2])
-                
-                # Simulate connection strength 
-                connection_strength = min(users_country1, users_country2)
-                
-                country_pairs.append({
-                    'Country1': country1,
-                    'Country2': country2,
-                    'ConnectionStrength': connection_strength
-                })
-        
-        country_pair_df = pd.DataFrame(country_pairs)
-        
-        if len(country_pair_df) > 0:
-            try:
-                heatmap_data = pd.pivot_table(
-                    country_pair_df, 
-                    values='ConnectionStrength',
-                    index='Country1',
-                    columns='Country2',
-                    fill_value=0
-                )
-                
-                heatmap_fig = px.imshow(heatmap_data,
-                                       labels=dict(x="Country", y="Country", color="Connection Strength"),
-                                       title="Cross-Country Connection Strength")
-                
-                st.plotly_chart(heatmap_fig, use_container_width=True)
-            except Exception as e:
-                st.write("Error generating heatmap:", e)
-                st.write("Not enough country data for cross-country analysis")
-        else:
-            st.write("Not enough country data for cross-country analysis")
-    
+           
     with tab4:
         st.title("Predictive Models")
         
