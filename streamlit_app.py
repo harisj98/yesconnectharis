@@ -1491,6 +1491,144 @@ def plot_model_performance(model_type, X_test, y_test):
     """
     
     st.markdown(segmentation_html, unsafe_allow_html=True)
+
+# After displaying the segment cards and before the regional heatmap
+                st.header("User Segment Cluster Visualization")
+                
+                # Create a DataFrame for plotting cluster visualization
+                cluster_viz_data = []
+                
+                # Collect data for each segment - using segment users
+                for segment_name in segment_names:
+                    segment_users = df_filtered[df_filtered['segment'] == segment_name]
+                    if len(segment_users) > 0:
+                        # Sample users for better visualization (limit points)
+                        sample_size = min(100, len(segment_users))
+                        sampled_users = segment_users.sample(n=sample_size)
+                        
+                        # Add each user as a data point
+                        for _, user in sampled_users.iterrows():
+                            cluster_viz_data.append({
+                                'Segment': segment_name,
+                                'Connections': user['total_friend_count'],
+                                'Days_Since_Login': user['days_since_login'],
+                                'Profile_Complete': 'Yes' if user['profile_completion'] == 1 else 'No',
+                                'Career_Level': user['Career Level']
+                            })
+                
+                # Create the DataFrame
+                if cluster_viz_data:
+                    cluster_df = pd.DataFrame(cluster_viz_data)
+                    
+                    # Color mapping for segments
+                    color_map = {
+                        "Network Builders": "#1e88e5",
+                        "Established Experts": "#43a047", 
+                        "Academic Engagers": "#fb8c00",
+                        "Emerging Professionals": "#e53935",
+                        "Dormant Members": "#8e24aa"
+                    }
+                    
+                    # Create the scatter plot with Plotly
+                    fig = px.scatter(
+                        cluster_df, 
+                        x='Connections',
+                        y='Days_Since_Login',
+                        color='Segment',
+                        symbol='Profile_Complete',
+                        hover_data=['Career_Level'],
+                        color_discrete_map=color_map,
+                        title='User Segments - Connection Count vs. Days Since Login',
+                        labels={
+                            'Connections': 'Connection Count',
+                            'Days_Since_Login': 'Days Since Last Login',
+                            'Profile_Complete': 'Profile Avatar Created',
+                            'Career_Level': 'Career Level'
+                        },
+                        height=600
+                    )
+                    
+                    # Improve the layout
+                    fig.update_layout(
+                        legend=dict(
+                            title_text='',
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        ),
+                        xaxis=dict(
+                            title_font=dict(size=14),
+                            tickfont=dict(size=12),
+                            gridcolor='#f0f0f0'
+                        ),
+                        yaxis=dict(
+                            title_font=dict(size=14),
+                            tickfont=dict(size=12),
+                            gridcolor='#f0f0f0'
+                        ),
+                        plot_bgcolor='white'
+                    )
+                    
+                    # Add segment centroid indicators (larger markers)
+                    for segment_name in cluster_df['Segment'].unique():
+                        segment_data = cluster_df[cluster_df['Segment'] == segment_name]
+                        avg_connections = segment_data['Connections'].mean()
+                        avg_days = segment_data['Days_Since_Login'].mean()
+                        
+                        fig.add_trace(go.Scatter(
+                            x=[avg_connections],
+                            y=[avg_days],
+                            mode='markers',
+                            marker=dict(
+                                symbol='circle',
+                                size=30,
+                                color=color_map.get(segment_name, '#000000'),
+                                line=dict(width=2, color='white'),
+                                opacity=0.7
+                            ),
+                            name=f"{segment_name} (Centroid)",
+                            hoverinfo='name',
+                            showlegend=False
+                        ))
+                        
+                        # Add segment name annotation
+                        fig.add_annotation(
+                            x=avg_connections,
+                            y=avg_days,
+                            text=segment_name,
+                            showarrow=False,
+                            font=dict(
+                                size=10,
+                                color="white"
+                            ),
+                            bgcolor=color_map.get(segment_name, '#000000'),
+                            bordercolor="white",
+                            borderwidth=1,
+                            borderpad=3,
+                            opacity=0.8,
+                            align="center"
+                        )
+                    
+                    # Display the plot
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Add explanation text
+                    st.markdown("""
+                    **How to interpret this visualization:**
+                    - Each point represents a user, colored by their segment
+                    - The X-axis shows connection count (higher means more network building)
+                    - The Y-axis shows days since last login (higher means less recent activity)
+                    - Larger circles represent segment centroids (average user in that segment)
+                    - Different symbols indicate whether a user has created a profile avatar
+                    
+                    This visualization helps identify the behavioral differences between segments and
+                    spot opportunities for moving users from one segment to another through targeted interventions.
+                    """)
+                else:
+                    st.info("Not enough data to generate cluster visualization. Try adjusting your filters.")
+                    
     
     # Create regional heatmap
     st.subheader("Regional Distribution of Member Segments")
