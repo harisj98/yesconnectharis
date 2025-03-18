@@ -1493,7 +1493,7 @@ def plot_model_performance(model_type, X_test, y_test):
     st.markdown(segmentation_html, unsafe_allow_html=True)
 
 # After displaying the segment cards and before the regional heatmap
-        st.header("User Segment Cluster Visualization")
+    st.header("User Segment Cluster Visualization")
         
         # Create a DataFrame for plotting cluster visualization
         cluster_viz_data = []
