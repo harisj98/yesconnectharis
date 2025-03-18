@@ -4547,18 +4547,6 @@ def main():
         day_fig = px.bar(day_counts, x='Day', y='Count', title='Login Activity by Day of Week')
         st.plotly_chart(day_fig, use_container_width=True)
         
-        # User activity by career level
-        activity_by_career = df_filtered.groupby('Career Level').agg({
-            'days_since_login': 'mean',
-            'total_friend_count': 'mean',
-            'profile_completion': 'mean'
-        }).reset_index()
-        
-        activity_fig = px.bar(activity_by_career, x='Career Level', 
-                              y=['days_since_login', 'total_friend_count', 'profile_completion'],
-                              title='Activity Metrics by Career Level',
-                              barmode='group')
-        st.plotly_chart(activity_fig, use_container_width=True)
     
     with tab3:
         st.title("Network Analysis")
