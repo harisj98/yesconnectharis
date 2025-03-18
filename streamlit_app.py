@@ -1705,39 +1705,7 @@ def plot_model_performance(model_type, X_test, y_test):
     
     st.plotly_chart(fig, use_container_width=True)
     
-    # Generate insights about regional distribution
-    st.markdown("### Key Regional Insights:")
-    
-    insights = []
-    for i, region in enumerate(regions):
-        if i < len(heatmap_data):
-            max_segment_idx = np.argmax(heatmap_data[i]) if len(heatmap_data[i]) > 0 else -1
-            if max_segment_idx >= 0 and max_segment_idx < len(segments):
-                max_segment = segments[max_segment_idx]
-                max_value = heatmap_data[i][max_segment_idx]
-                if max_value > 0:
-                    insights.append(f"- **{region}** is dominated by {max_segment} ({max_value:.0f}%), suggesting " + 
-                                   get_region_insight(region, max_segment))
-    
-    if insights:
-        st.markdown("\n".join(insights))
-    else:
-        st.markdown("- Not enough data to generate regional insights with current filters")
-    
-    # Function to generate regional insights
-    def get_region_insight(region, segment):
-        if segment == "Network Builders":
-            return "strong community development in this region."
-        elif segment == "Academic Engagers":
-            return "educational institutions are key partners in this area."
-        elif segment == "Emerging Professionals":
-            return "career development resources would be valuable here."
-        elif segment == "Established Experts":
-            return "this region is valuable for mentorship programs."
-        elif segment == "Dormant Members":
-            return "potential connectivity or engagement barriers exist here."
-        else:
-            return f"this segment shows significant presence here."
+
     
     # Show sample users from each segment
     st.subheader("Sample Users by Segment")
