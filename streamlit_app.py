@@ -1634,7 +1634,11 @@ def plot_geographic_distribution(df):
     # Check if standardization is enabled and available in session state
     if 'enable_country_standardization' in st.session_state and st.session_state['enable_country_standardization']:
         # Use standardized data from session state
-        df_to_use = st.session_state['df_standardized']
+        if 'df_standardized' in st.session_state:
+            df_to_use = st.session_state['df_standardized']
+        else:
+            # Apply standardization directly if not in session state
+            df_to_use, _, _ = standardize_countries(df.copy())
     else:
         # Use original data
         df_to_use = df
