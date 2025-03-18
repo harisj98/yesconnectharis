@@ -1501,120 +1501,118 @@ def plot_model_performance(model_type, X_test, y_test):
     st.markdown(segmentation_html, unsafe_allow_html=True)
 
 # After displaying the segment cards and before the regional heatmap
-        st.header("User Segment Cluster Visualization")
-        
-        # Define your consistent segment names and colors
-        segment_colors = {
-            "Network Builders": "#1e88e5",     # Blue
-            "Established Experts": "#43a047",  # Green
-            "Academic Engagers": "#fb8c00",    # Orange
-            "Emerging Professionals": "#e53935", # Red
-            "Dormant Members": "#8e24aa"       # Purple
-        }
-        
-        # Create a dataframe for the centroids (average values for each segment)
-        centroids = []
-        for segment in df_filtered['segment'].unique():
-            segment_data = df_filtered[df_filtered['segment'] == segment]
-            if len(segment_data) > 0:  # Ensure we have data
-                centroids.append({
-                    'segment': segment,
-                    'x': segment_data['total_friend_count'].mean(),
-                    'y': segment_data['days_since_login'].mean(),
-                    'size': len(segment_data)  # Size proportional to number of users
-                })
-        
-        centroid_df = pd.DataFrame(centroids)
-        
-        # Create the main scatter plot
-        fig = go.Figure()
-        
-        # Add circles for each segment centroid
-        for _, row in centroid_df.iterrows():
-            segment = row['segment']
-            color = segment_colors.get(segment, "#7f7f7f")  # Default gray if not in mapping
-            
-            # Add the colored circle (bubble)
-            fig.add_trace(go.Scatter(
-                x=[row['x']], 
-                y=[row['y']],
-                mode='markers',
-                marker=dict(
-                    color=color,
-                    size=50,
-                    opacity=0.3,
-                    line=dict(width=2, color=color)
-                ),
-                name=segment,
-                hoverinfo='name',
-                showlegend=False
-            ))
-            
-            # Add segment label inside the bubble
-            fig.add_annotation(
-                x=row['x'],
-                y=row['y'],
-                text=segment,
-                showarrow=False,
-                font=dict(size=12, color="black", family="Arial Black"),
-                align="center"
-            )
-        
-        # Configure the layout
-        fig.update_layout(
-            title="User Segment Clustering Visualization",
-            xaxis=dict(
-                title="Connection Count",
-                tickmode='linear',
-                tick0=0,
-                dtick=5,
-                range=[0, 20]
-            ),
-            yaxis=dict(
-                title="Days Since Login",
-                tickmode='array',
-                tickvals=[0, 90, 180, 365, 500],
-                range=[0, 550]
-            ),
-            height=600,
-            width=900,
-            plot_bgcolor='white',
-            legend=dict(
-                title="Segments",
-                yanchor="top",
-                y=0.99,
-                xanchor="right",
-                x=0.99,
-                bgcolor="white",
-                bordercolor="black",
-                borderwidth=1
-            )
-        )
-        
-        # Add a legend box to the side (this is a workaround for separate legends)
-        segments_list = list(segment_colors.keys())
-        for i, segment in enumerate(segments_list):
-            fig.add_trace(go.Scatter(
-                x=[None], y=[None],
-                mode="markers",
-                marker=dict(size=10, color=segment_colors.get(segment, "#7f7f7f")),
-                name=segment,
-                showlegend=True
-            ))
-        
-        # Display the plot
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Add explanation
-        st.markdown("""
-        **How to interpret this visualization:**
-        - Each circle represents a user segment based on behavioral patterns
-        - The X-axis shows the average number of connections per user in each segment
-        - The Y-axis shows the average days since last login
-        - Circle size represents the relative number of users in each segment
-        - Position indicates the relationship between connection activity and login recency
-        """)
+    st.header("User Segment Cluster Visualization")
 
+# Define your consistent segment names and colors
+    segment_colors = {
+        "Network Builders": "#1e88e5",     # Blue
+        "Established Experts": "#43a047",  # Green
+        "Academic Engagers": "#fb8c00",    # Orange
+        "Emerging Professionals": "#e53935", # Red
+        "Dormant Members": "#8e24aa"       # Purple
+    }
+
+# Create a dataframe for the centroids (average values for each segment)
+    centroids = []
+    for segment in df_filtered['segment'].unique():
+        segment_data = df_filtered[df_filtered['segment'] == segment]
+        if len(segment_data) > 0:  # Ensure we have data
+            centroids.append({
+                'segment': segment,
+                'x': segment_data['total_friend_count'].mean(),
+                'y': segment_data['days_since_login'].mean(),
+                'size': len(segment_data)  # Size proportional to number of users
+            })
+
+    centroid_df = pd.DataFrame(centroids)
+
+# Create the main scatter plot
+    fig = go.Figure()
+
+    # Add circles for each segment centroid
+    for _, row in centroid_df.iterrows():
+        segment = row['segment']
+        color = segment_colors.get(segment, "#7f7f7f")  # Default gray if not in mapping
+    
+    # Add the colored circle (bubble)
+        fig.add_trace(go.Scatter(
+            x=[row['x']], 
+            y=[row['y']],
+            mode='markers',
+            marker=dict(
+                color=color,
+                size=50,
+                opacity=0.3,
+                line=dict(width=2, color=color)
+            ),
+            name=segment,
+            hoverinfo='name',
+            showlegend=False
+        ))
+    
+        # Add segment label inside the bubble
+        fig.add_annotation(
+            x=row['x'],
+            y=row['y'],
+            text=segment,
+            showarrow=False,
+            font=dict(size=12, color="black", family="Arial Black"),
+            align="center"
+        )
+
+# Configure the layout
+    fig.update_layout(
+        title="User Segment Clustering Visualization",
+        xaxis=dict(
+            title="Connection Count",
+            tickmode='linear',
+            tick0=0,
+            dtick=5,
+            range=[0, 20]
+        ),
+        yaxis=dict(
+            title="Days Since Login",
+            tickmode='array',
+            tickvals=[0, 90, 180, 365, 500],
+            range=[0, 550]
+        ),
+        height=600,
+        plot_bgcolor='white',
+        legend=dict(
+            title="Segments",
+            yanchor="top",
+            y=0.99,
+            xanchor="right",
+            x=0.99,
+            bgcolor="white",
+            bordercolor="black",
+            borderwidth=1
+        )
+    )
+
+    # Add a legend box to the side (this is a workaround for separate legends)
+    segments_list = list(segment_colors.keys())
+    for i, segment in enumerate(segments_list):
+        fig.add_trace(go.Scatter(
+            x=[None], y=[None],
+            mode="markers",
+            marker=dict(size=10, color=segment_colors.get(segment, "#7f7f7f")),
+            name=segment,
+            showlegend=True
+        ))
+
+    # Display the plot
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Add explanation
+    st.markdown("""
+**How to interpret this visualization:**
+- Each circle represents a user segment based on behavioral patterns
+- The X-axis shows the average number of connections per user in each segment
+- The Y-axis shows the average days since last login
+- Circle size represents the relative number of users in each segment
+- Position indicates the relationship between connection activity and login recency
+""")
                     
     
     # Create regional heatmap
