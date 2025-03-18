@@ -1920,557 +1920,677 @@ def trend_analysis_tab(df):
     </style>
     """, unsafe_allow_html=True)
     
-    # Convert login date to datetime
-    df['last_login_date'] = pd.to_datetime(df['last_login_date'])
+    # Create trend analysis sub-tabs
+    trend_subtab1, trend_subtab2, trend_subtab3 = st.tabs([
+        "Growth Trends", 
+        "Engagement Patterns", 
+        "Market Opportunities"  # New sub-tab
+    ])
     
-    # Create time periods for analysis
-    df['login_month'] = df['last_login_date'].dt.to_period('M')
-    df['login_quarter'] = df['last_login_date'].dt.to_period('Q')
+    with trend_subtab1:
+        # Convert login date to datetime
+        df['last_login_date'] = pd.to_datetime(df['last_login_date'])
+        
+        # Create time periods for analysis
+        df['login_month'] = df['last_login_date'].dt.to_period('M')
+        df['login_quarter'] = df['last_login_date'].dt.to_period('Q')
 
-    valid_countries = df[~df['Country'].isin(['N/A', 'Unknown'])]
+        valid_countries = df[~df['Country'].isin(['N/A', 'Unknown'])]
 
-    # Calculate key metrics for insights section
-    # ----------------------------------------
-    # 1. User growth metrics
-    monthly_users = df.groupby(df['last_login_date'].dt.to_period('M')).size()
-    
-    # Calculate month-over-month growth rate if we have at least 2 months
-    if len(monthly_users) >= 2:
-        current_month_users = monthly_users.iloc[-1]
-        previous_month_users = monthly_users.iloc[-2]
-        growth_rate = ((current_month_users - previous_month_users) / previous_month_users) * 100
-    else:
-        growth_rate = 0
-    
-    # 2. Top growing countries
-    country_growth = []
-    
-    # Get the last two months of data
-    if len(df['login_month'].unique()) >= 2:
-        latest_months = sorted(df['login_month'].unique())[-2:]
-        latest_month = latest_months[1]
-        prev_month = latest_months[0]
+        # Calculate key metrics for insights section
+        # ----------------------------------------
+        # 1. User growth metrics
+        monthly_users = df.groupby(df['last_login_date'].dt.to_period('M')).size()
         
-        # Count users by country for each month
-        latest_country_counts = valid_countries[valid_countries['login_month'] == latest_month]['Country'].value_counts()
-        prev_country_counts = valid_countries[valid_countries['login_month'] == prev_month]['Country'].value_counts()
+        # Calculate month-over-month growth rate if we have at least 2 months
+        if len(monthly_users) >= 2:
+            current_month_users = monthly_users.iloc[-1]
+            previous_month_users = monthly_users.iloc[-2]
+            growth_rate = ((current_month_users - previous_month_users) / previous_month_users) * 100
+        else:
+            growth_rate = 0
         
-        # Calculate growth rates for countries
-        for country in latest_country_counts.index:
-            latest_count = latest_country_counts.get(country, 0)
-            prev_count = prev_country_counts.get(country, 0)
+        # 2. Top growing countries
+        country_growth = []
+        
+        # Get the last two months of data
+        if len(df['login_month'].unique()) >= 2:
+            latest_months = sorted(df['login_month'].unique())[-2:]
+            latest_month = latest_months[1]
+            prev_month = latest_months[0]
             
-            if prev_count > 0 and latest_count >= 5:  # Only consider countries with at least 5 users
-                growth_pct = ((latest_count - prev_count) / prev_count) * 100
-                country_growth.append((country, growth_pct))
-        
-        # Sort by growth rate
-        country_growth.sort(key=lambda x: x[1], reverse=True)
-    
-    # 3. Career level shifts
-    career_shift = {}
-    
-    if len(df['login_month'].unique()) >= 2:
-        # Get career level distribution for latest and previous month
-        latest_career = df[df['login_month'] == latest_month]['Career Level'].value_counts(normalize=True)
-        prev_career = df[df['login_month'] == prev_month]['Career Level'].value_counts(normalize=True)
-        
-        # Calculate shifts
-        for career in set(latest_career.index) | set(prev_career.index):
-            latest_pct = latest_career.get(career, 0) * 100
-            prev_pct = prev_career.get(career, 0) * 100
+            # Count users by country for each month
+            latest_country_counts = valid_countries[valid_countries['login_month'] == latest_month]['Country'].value_counts()
+            prev_country_counts = valid_countries[valid_countries['login_month'] == prev_month]['Country'].value_counts()
             
-            shift = latest_pct - prev_pct
-            career_shift[career] = shift
-    
-    # 4. Connection growth
-    if len(df['login_month'].unique()) >= 2:
-        latest_connections = df[df['login_month'] == latest_month]['total_friend_count'].mean()
-        prev_connections = df[df['login_month'] == prev_month]['total_friend_count'].mean()
+            # Calculate growth rates for countries
+            for country in latest_country_counts.index:
+                latest_count = latest_country_counts.get(country, 0)
+                prev_count = prev_country_counts.get(country, 0)
+                
+                if prev_count > 0 and latest_count >= 5:  # Only consider countries with at least 5 users
+                    growth_pct = ((latest_count - prev_count) / prev_count) * 100
+                    country_growth.append((country, growth_pct))
+            
+            # Sort by growth rate
+            country_growth.sort(key=lambda x: x[1], reverse=True)
         
-        if prev_connections > 0:
-            connection_growth = ((latest_connections - prev_connections) / prev_connections) * 100
+        # 3. Career level shifts
+        career_shift = {}
+        
+        if len(df['login_month'].unique()) >= 2:
+            # Get career level distribution for latest and previous month
+            latest_career = df[df['login_month'] == latest_month]['Career Level'].value_counts(normalize=True)
+            prev_career = df[df['login_month'] == prev_month]['Career Level'].value_counts(normalize=True)
+            
+            # Calculate shifts
+            for career in set(latest_career.index) | set(prev_career.index):
+                latest_pct = latest_career.get(career, 0) * 100
+                prev_pct = prev_career.get(career, 0) * 100
+                
+                shift = latest_pct - prev_pct
+                career_shift[career] = shift
+        
+        # 4. Connection growth
+        if len(df['login_month'].unique()) >= 2:
+            latest_connections = df[df['login_month'] == latest_month]['total_friend_count'].mean()
+            prev_connections = df[df['login_month'] == prev_month]['total_friend_count'].mean()
+            
+            if prev_connections > 0:
+                connection_growth = ((latest_connections - prev_connections) / prev_connections) * 100
+            else:
+                connection_growth = 0
         else:
             connection_growth = 0
-    else:
-        connection_growth = 0
-    
-    # 5. Badge achievement trends
-    badge_trends = {}
-    
-    if len(df['login_month'].unique()) >= 2:
-        # Calculate active user badge trend
-        latest_active = len(df[(df['login_month'] == latest_month) & 
-                             (df['profile_completion'] == 1) & 
-                             (df['days_since_login'] <= 30)]) / len(df[df['login_month'] == latest_month])
         
-        prev_active = len(df[(df['login_month'] == prev_month) & 
-                           (df['profile_completion'] == 1) & 
-                           (df['days_since_login'] <= 30)]) / len(df[df['login_month'] == prev_month])
+        # 5. Badge achievement trends
+        badge_trends = {}
         
-        badge_trends['active'] = (latest_active - prev_active) * 100
-        
-        # Networker badge trend
-        latest_networker = len(df[(df['login_month'] == latest_month) & 
-                                (df['profile_completion'] == 1) & 
-                                (df['total_friend_count'] >= 10)]) / len(df[df['login_month'] == latest_month])
-        
-        prev_networker = len(df[(df['login_month'] == prev_month) & 
-                              (df['profile_completion'] == 1) & 
-                              (df['total_friend_count'] >= 10)]) / len(df[df['login_month'] == prev_month])
-        
-        badge_trends['networker'] = (latest_networker - prev_networker) * 100
-        
-        # Top poster trend (using a formula as proxy)
-        badge_trends['poster'] = badge_trends['networker'] * 0.8  # Estimate based on networker trend
-    
-    # 6. Mobile vs web trends
-    mobile_stats = {}
-    
-    # Mobile adoption rate
-    mobile_users = df[df['uses_mobile'] == 1]
-    web_users = df[df['uses_mobile'] == 0]
-    
-    if len(mobile_users) > 0 and len(web_users) > 0:
-        mobile_stats['connection_ratio'] = mobile_users['total_friend_count'].mean() / web_users['total_friend_count'].mean()
-        mobile_stats['profile_ratio'] = mobile_users['profile_completion'].mean() / web_users['profile_completion'].mean()
-        
-        # Check if mobile adoption is growing
         if len(df['login_month'].unique()) >= 2:
-            latest_mobile_rate = len(df[(df['login_month'] == latest_month) & (df['uses_mobile'] == 1)]) / len(df[df['login_month'] == latest_month])
-            prev_mobile_rate = len(df[(df['login_month'] == prev_month) & (df['uses_mobile'] == 1)]) / len(df[df['login_month'] == prev_month])
+            # Calculate active user badge trend
+            latest_active = len(df[(df['login_month'] == latest_month) & 
+                                 (df['profile_completion'] == 1) & 
+                                 (df['days_since_login'] <= 30)]) / len(df[df['login_month'] == latest_month])
             
-            mobile_stats['growth'] = (latest_mobile_rate - prev_mobile_rate) * 100
-    
-    # 7. Mentorship gap calculation
-    mentorship_gap = {}
-    
-    # Define potential mentors and mentees
-    mentors = df[(df['Career Level'].isin(['Senior', 'Executive', 'Mid-Level Industry Professional']))]
-    mentees = df[(df['Career Level'].isin(['Student', 'Entry', 'Early Career Professional']))]
-    
-    if len(mentors) > 0 and len(mentees) > 0:
-        current_ratio = len(mentors) / len(mentees)
-        mentorship_gap['current_ratio'] = current_ratio
+            prev_active = len(df[(df['login_month'] == prev_month) & 
+                               (df['profile_completion'] == 1) & 
+                               (df['days_since_login'] <= 30)]) / len(df[df['login_month'] == prev_month])
+            
+            badge_trends['active'] = (latest_active - prev_active) * 100
+            
+            # Networker badge trend
+            latest_networker = len(df[(df['login_month'] == latest_month) & 
+                                    (df['profile_completion'] == 1) & 
+                                    (df['total_friend_count'] >= 10)]) / len(df[df['login_month'] == latest_month])
+            
+            prev_networker = len(df[(df['login_month'] == prev_month) & 
+                                  (df['profile_completion'] == 1) & 
+                                  (df['total_friend_count'] >= 10)]) / len(df[df['login_month'] == prev_month])
+            
+            badge_trends['networker'] = (latest_networker - prev_networker) * 100
+            
+            # Top poster trend (using a formula as proxy)
+            badge_trends['poster'] = badge_trends['networker'] * 0.8  # Estimate based on networker trend
         
-        # Calculate previous ratio if we have time data
+        # 6. Mobile vs web trends
+        mobile_stats = {}
+        
+        # Mobile adoption rate
+        mobile_users = df[df['uses_mobile'] == 1]
+        web_users = df[df['uses_mobile'] == 0]
+        
+        if len(mobile_users) > 0 and len(web_users) > 0:
+            mobile_stats['connection_ratio'] = mobile_users['total_friend_count'].mean() / web_users['total_friend_count'].mean()
+            mobile_stats['profile_ratio'] = mobile_users['profile_completion'].mean() / web_users['profile_completion'].mean()
+            
+            # Check if mobile adoption is growing
+            if len(df['login_month'].unique()) >= 2:
+                latest_mobile_rate = len(df[(df['login_month'] == latest_month) & (df['uses_mobile'] == 1)]) / len(df[df['login_month'] == latest_month])
+                prev_mobile_rate = len(df[(df['login_month'] == prev_month) & (df['uses_mobile'] == 1)]) / len(df[df['login_month'] == prev_month])
+                
+                mobile_stats['growth'] = (latest_mobile_rate - prev_mobile_rate) * 100
+        
+        # 7. Mentorship gap calculation
+        mentorship_gap = {}
+        
+        # Define potential mentors and mentees
+        mentors = df[(df['Career Level'].isin(['Senior', 'Executive', 'Mid-Level Industry Professional']))]
+        mentees = df[(df['Career Level'].isin(['Student', 'Entry', 'Early Career Professional']))]
+        
+        if len(mentors) > 0 and len(mentees) > 0:
+            current_ratio = len(mentors) / len(mentees)
+            mentorship_gap['current_ratio'] = current_ratio
+            
+            # Calculate previous ratio if we have time data
+            if len(df['login_month'].unique()) >= 2:
+                prev_mentors = mentors[mentors['login_month'] == prev_month]
+                prev_mentees = mentees[mentees['login_month'] == prev_month]
+                
+                if len(prev_mentors) > 0 and len(prev_mentees) > 0:
+                    prev_ratio = len(prev_mentors) / len(prev_mentees)
+                    mentorship_gap['prev_ratio'] = prev_ratio
+                    mentorship_gap['ratio_change'] = (current_ratio - prev_ratio) / prev_ratio * 100
+        
+        # 8. Regional concentration
+        regional_concentration = {}
+        
+        # Calculate user distribution by country
+        country_distribution = df['Country'].value_counts(normalize=True)
+        
+        # Get top 3 countries
+        top3_countries = country_distribution.head(3).index.tolist()
+        top3_pct = country_distribution.head(3).sum() * 100
+        
+        regional_concentration['top3_pct'] = top3_pct
+        
+        # Calculate previous concentration if we have time data
         if len(df['login_month'].unique()) >= 2:
-            prev_mentors = mentors[mentors['login_month'] == prev_month]
-            prev_mentees = mentees[mentees['login_month'] == prev_month]
+            prev_distribution = df[df['login_month'] == prev_month]['Country'].value_counts(normalize=True)
+            prev_top3_pct = prev_distribution.head(3).sum() * 100
             
-            if len(prev_mentors) > 0 and len(prev_mentees) > 0:
-                prev_ratio = len(prev_mentors) / len(prev_mentees)
-                mentorship_gap['prev_ratio'] = prev_ratio
-                mentorship_gap['ratio_change'] = (current_ratio - prev_ratio) / prev_ratio * 100
-    
-    # 8. Regional concentration
-    regional_concentration = {}
-    
-    # Calculate user distribution by country
-    country_distribution = df['Country'].value_counts(normalize=True)
-    
-    # Get top 3 countries
-    top3_countries = country_distribution.head(3).index.tolist()
-    top3_pct = country_distribution.head(3).sum() * 100
-    
-    regional_concentration['top3_pct'] = top3_pct
-    
-    # Calculate previous concentration if we have time data
-    if len(df['login_month'].unique()) >= 2:
-        prev_distribution = df[df['login_month'] == prev_month]['Country'].value_counts(normalize=True)
-        prev_top3_pct = prev_distribution.head(3).sum() * 100
+            regional_concentration['prev_top3_pct'] = prev_top3_pct
+            regional_concentration['concentration_change'] = top3_pct - prev_top3_pct
         
-        regional_concentration['prev_top3_pct'] = prev_top3_pct
-        regional_concentration['concentration_change'] = top3_pct - prev_top3_pct
-    
-    # -----------------------------------------
-    # Display Key Insights Section with boxes
-    # -----------------------------------------
-    st.header("Key Trend Insights")
-    
-    # Create two columns layout
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Growth Insights")
+        # -----------------------------------------
+        # Display Key Insights Section with boxes
+        # -----------------------------------------
+        trend_subtab1.header("Key Trend Insights")
         
-        # User Growth Box
-        trend_class = "positive-trend" if growth_rate > 0 else "negative-trend"
-        sign = "+" if growth_rate > 0 else ""
-        st.markdown(f"""
-        <div class="insight-box">
-            <div class="insight-header">User Growth Rate</div>
-            <div class="insight-item">
-                <span class="{trend_class}">{sign}{growth_rate:.1f}%</span> (month-over-month)
-            </div>
-            <div class="insight-item">
-                Monthly user acquisition is {("growing" if growth_rate > 0 else "declining")}, indicating 
-                {("positive momentum" if growth_rate > 0 else "a need for revised acquisition strategies")}.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        # Create two columns layout
+        col1, col2 = trend_subtab1.columns(2)
         
-        # Top Growing Countries Box
-        countries_html = ""
-        if country_growth:
-            for i, (country, growth) in enumerate(country_growth[:3], 1):
-                trend_class = "positive-trend" if growth > 0 else "negative-trend"
-                sign = "+" if growth > 0 else ""
-                countries_html += f"<div class='insight-item'>{i}. {country} <span class='{trend_class}'>({sign}{growth:.1f}%)</span></div>"
-        else:
-            countries_html = "<div class='insight-item'>Insufficient data for country growth trends</div>"
+        with col1:
+            trend_subtab1.subheader("Growth Insights")
             
-        st.markdown(f"""
-        <div class="insight-box">
-            <div class="insight-header">Top Growing Countries</div>
-            {countries_html}
-            <div class="insight-item">
-                {("West African countries showing strongest growth potential." if country_growth and country_growth[0][1] > 0 else 
-                "No strong growth patterns identified in current period.")}
+            # User Growth Box
+            trend_class = "positive-trend" if growth_rate > 0 else "negative-trend"
+            sign = "+" if growth_rate > 0 else ""
+            trend_subtab1.markdown(f"""
+            <div class="insight-box">
+                <div class="insight-header">User Growth Rate</div>
+                <div class="insight-item">
+                    <span class="{trend_class}">{sign}{growth_rate:.1f}%</span> (month-over-month)
+                </div>
+                <div class="insight-item">
+                    Monthly user acquisition is {("growing" if growth_rate > 0 else "declining")}, indicating 
+                    {("positive momentum" if growth_rate > 0 else "a need for revised acquisition strategies")}.
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Career Level Shifts Box
-        career_html = ""
-        if career_shift:
-            # Show top increasing and decreasing career levels
-            increasing = sorted([(k, v) for k, v in career_shift.items() if v > 0], key=lambda x: x[1], reverse=True)
-            decreasing = sorted([(k, v) for k, v in career_shift.items() if v < 0], key=lambda x: x[1])
+            """, unsafe_allow_html=True)
             
-            if increasing:
-                career_html += f"<div class='insight-item'>Increasing proportion of <strong>{increasing[0][0]}</strong> <span class='positive-trend'>({increasing[0][1]:+.1f}%)</span></div>"
-            
-            if decreasing:
-                career_html += f"<div class='insight-item'>Decreasing proportion of <strong>{decreasing[0][0]}</strong> <span class='negative-trend'>({decreasing[0][1]:+.1f}%)</span></div>"
-            
-            if len(increasing) == 0 and len(decreasing) == 0:
-                career_html = "<div class='insight-item'>Career level distribution remains stable</div>"
-        else:
-            career_html = "<div class='insight-item'>Insufficient data for career level trends</div>"
-        
-        st.markdown(f"""
-        <div class="insight-box">
-            <div class="insight-header">Career Level Shifts</div>
-            {career_html}
-            <div class="insight-item">
-                {("Platform demographics are shifting, requiring adjusted targeting strategies." if career_shift and (increasing or decreasing) else
-                "Career composition is stable across the platform.")}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.subheader("Engagement Insights")
-        
-        # Connection Growth Box
-        trend_class = "positive-trend" if connection_growth > 0 else "negative-trend"
-        sign = "+" if connection_growth > 0 else ""
-        st.markdown(f"""
-        <div class="insight-box">
-            <div class="insight-header">Connection Growth</div>
-            <div class="insight-item">
-                <span class="{trend_class}">{sign}{connection_growth:.1f}%</span> (month-over-month)
-            </div>
-            <div class="insight-item">
-                {("Significant increase in connection-making activity, indicating strong network expansion." if connection_growth > 10 else
-                "Connection activity is stable within existing user segments." if -5 <= connection_growth <= 10 else
-                "Declining connection rates suggest potential engagement issues to address.")}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Badge Achievement Box
-        badge_html = ""
-        if badge_trends:
-            # Show badge trends
-            if badge_trends.get('active', 0) > badge_trends.get('networker', 0) and badge_trends.get('active', 0) > badge_trends.get('poster', 0):
-                badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Frequently Active User badge achievement increasing fastest</div>"
-            elif badge_trends.get('networker', 0) > badge_trends.get('active', 0) and badge_trends.get('networker', 0) > badge_trends.get('poster', 0):
-                badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Networker badge achievement increasing fastest</div>"
+            # Top Growing Countries Box
+            countries_html = ""
+            if country_growth:
+                for i, (country, growth) in enumerate(country_growth[:3], 1):
+                    trend_class = "positive-trend" if growth > 0 else "negative-trend"
+                    sign = "+" if growth > 0 else ""
+                    countries_html += f"<div class='insight-item'>{i}. {country} <span class='{trend_class}'>({sign}{growth:.1f}%)</span></div>"
             else:
-                badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Top Poster badge achievement increasing fastest</div>"
-            
-            if abs(badge_trends.get('poster', 0)) < 1:
-                badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Top Poster badge achievement plateauing</div>"
-            
-            badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Regional badge distribution becoming more balanced</div>"
-        else:
-            badge_html = "<div class='insight-item'>Insufficient data for badge achievement trends</div>"
-        
-        st.markdown(f"""
-        <div class="insight-box">
-            <div class="insight-header">Badge Achievement Trends</div>
-            {badge_html}
-            <div class="insight-item">
-                Users are logging in more frequently, but content creation has plateaued.
+                countries_html = "<div class='insight-item'>Insufficient data for country growth trends</div>"
+                
+            trend_subtab1.markdown(f"""
+            <div class="insight-box">
+                <div class="insight-header">Top Growing Countries</div>
+                {countries_html}
+                <div class="insight-item">
+                    {("West African countries showing strongest growth potential." if country_growth and country_growth[0][1] > 0 else 
+                    "No strong growth patterns identified in current period.")}
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Mobile Usage Box
-        mobile_html = ""
-        if mobile_stats:
-            if mobile_stats.get('growth', 0) > 0:
-                mobile_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Mobile engagement growing faster than web</div>"
+            """, unsafe_allow_html=True)
             
-            if mobile_stats.get('profile_ratio', 1) > 1:
-                mobile_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Profile completion rates higher on mobile platform</div>"
-            
-            if mobile_stats.get('connection_ratio', 1) > 1:
-                mobile_html += f"<div class='insight-item'><span class='insight-bullet'>•</span> Mobile users have {(mobile_stats['connection_ratio']-1)*100:.0f}% higher average connection counts</div>"
-        else:
-            mobile_html = "<div class='insight-item'>Insufficient data for mobile usage analysis</div>"
-        
-        st.markdown(f"""
-        <div class="insight-box">
-            <div class="insight-header">Mobile Usage</div>
-            {mobile_html}
-            <div class="insight-item">
-                {("Mobile user experience is driving higher engagement, suggesting investment opportunities." if mobile_stats and mobile_stats.get('connection_ratio', 1) > 1.1 else
-                "Mobile and web platforms show comparable engagement metrics.")}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Show trend alerts with boxed styling
-    st.subheader("Trend Alerts & Opportunities")
-    
-    alerts = []
-    
-    # Mentorship Gap alert
-    if mentorship_gap:
-        mentor_alert = {
-            "type": "opportunity",
-            "title": "Mentorship Gap",
-            "description": "Growing imbalance between Early Career and Senior members suggests opportunity for targeted mentor recruitment.",
-            "metrics": f"Current mentor:mentee ratio is 1:{1/mentorship_gap['current_ratio']:.1f}"
-        }
-        
-        if 'prev_ratio' in mentorship_gap:
-            mentor_alert["metrics"] += f", down from 1:{1/mentorship_gap['prev_ratio']:.1f} last period."
-        else:
-            mentor_alert["metrics"] += "."
-            
-        alerts.append(mentor_alert)
-    
-    # Mobile Engagement alert
-    if mobile_stats and mobile_stats.get('connection_ratio', 1) > 1.1:
-        mobile_alert = {
-            "type": "success",
-            "title": "Mobile Engagement",
-            "description": "Mobile app adoption is driving higher connection rates and profile completion.",
-            "metrics": f"Mobile users have {(mobile_stats['connection_ratio']-1)*100:.0f}% higher average connection counts than web-only users."
-        }
-        alerts.append(mobile_alert)
-    
-    # Regional Disparity alert
-    if regional_concentration:
-        region_alert = {
-            "type": "warning",
-            "title": "Regional Disparity",
-            "description": f"User growth is concentrated in {len(top3_countries)} countries while the rest show minimal growth.",
-            "metrics": f"Top 3 countries represent {regional_concentration['top3_pct']:.1f}% of users"
-        }
-        
-        if 'prev_top3_pct' in regional_concentration:
-            if regional_concentration['concentration_change'] > 0:
-                region_alert["metrics"] += f", up from {regional_concentration['prev_top3_pct']:.1f}% last period."
+            # Career Level Shifts Box
+            career_html = ""
+            if career_shift:
+                # Show top increasing and decreasing career levels
+                increasing = sorted([(k, v) for k, v in career_shift.items() if v > 0], key=lambda x: x[1], reverse=True)
+                decreasing = sorted([(k, v) for k, v in career_shift.items() if v < 0], key=lambda x: x[1])
+                
+                if increasing:
+                    career_html += f"<div class='insight-item'>Increasing proportion of <strong>{increasing[0][0]}</strong> <span class='positive-trend'>({increasing[0][1]:+.1f}%)</span></div>"
+                
+                if decreasing:
+                    career_html += f"<div class='insight-item'>Decreasing proportion of <strong>{decreasing[0][0]}</strong> <span class='negative-trend'>({decreasing[0][1]:+.1f}%)</span></div>"
+                
+                if len(increasing) == 0 and len(decreasing) == 0:
+                    career_html = "<div class='insight-item'>Career level distribution remains stable</div>"
             else:
-                region_alert["metrics"] += f", down from {regional_concentration['prev_top3_pct']:.1f}% last period."
-        else:
-            region_alert["metrics"] += "."
+                career_html = "<div class='insight-item'>Insufficient data for career level trends</div>"
             
-        alerts.append(region_alert)
-    
-    # Show alerts with boxed formatting
-    for i, alert in enumerate(alerts):
-        color = "#10b981" if alert["type"] == "success" else "#f59e0b" if alert["type"] == "warning" else "#3b82f6"
-        icon = "✅" if alert["type"] == "success" else "⚠️" if alert["type"] == "warning" else "💡"
+            trend_subtab1.markdown(f"""
+            <div class="insight-box">
+                <div class="insight-header">Career Level Shifts</div>
+                {career_html}
+                <div class="insight-item">
+                    {("Platform demographics are shifting, requiring adjusted targeting strategies." if career_shift and (increasing or decreasing) else
+                    "Career composition is stable across the platform.")}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         
-        st.markdown(f"""
-        <div class="insight-box" style="border-left: 4px solid {color};">
-            <div class="insight-header">{icon} {alert['title']}</div>
-            <div class="insight-item">{alert['description']}</div>
-            <div class="insight-item" style="font-size: 0.9rem; color: #6b7280;"><i>{alert['metrics']}</i></div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # If not enough data for insights, show a message
-    if not alerts:
-        st.info("Insufficient historical data to generate trend insights. Please check back when more data is available.")
-    
-    # Continue with the rest of the dashboard (controls and visualizations)
-    st.header("Detailed Trend Analysis")
-    
-    # Select time granularity
-    time_granularity = st.radio(
-        "Time Period Granularity",
-        options=["Monthly", "Quarterly"],
-        horizontal=True
-    )
-    
-    # Select metrics to analyze
-    st.subheader("Select Metrics to Analyze")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        show_user_growth = st.checkbox("User Growth", value=True)
-        show_career_trends = st.checkbox("Career Level Distribution", value=True)
-    
-    with col2:
-        show_engagement_trends = st.checkbox("Engagement Metrics", value=True)
-        show_badge_trends = st.checkbox("Badge Achievement", value=True)
-    
-    # Define time period column based on selection
-    time_period_col = 'login_month' if time_granularity == "Monthly" else 'login_quarter'
-    
-    # 1. User Growth Analysis
-    if show_user_growth:
-        st.header("User Growth Trends")
+        with col2:
+            trend_subtab1.subheader("Engagement Insights")
+            
+            # Connection Growth Box
+            trend_class = "positive-trend" if connection_growth > 0 else "negative-trend"
+            sign = "+" if connection_growth > 0 else ""
+            trend_subtab1.markdown(f"""
+            <div class="insight-box">
+                <div class="insight-header">Connection Growth</div>
+                <div class="insight-item">
+                    <span class="{trend_class}">{sign}{connection_growth:.1f}%</span> (month-over-month)
+                </div>
+                <div class="insight-item">
+                    {("Significant increase in connection-making activity, indicating strong network expansion." if connection_growth > 10 else
+                    "Connection activity is stable within existing user segments." if -5 <= connection_growth <= 10 else
+                    "Declining connection rates suggest potential engagement issues to address.")}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Badge Achievement Box
+            badge_html = ""
+            if badge_trends:
+                # Show badge trends
+                if badge_trends.get('active', 0) > badge_trends.get('networker', 0) and badge_trends.get('active', 0) > badge_trends.get('poster', 0):
+                    badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Frequently Active User badge achievement increasing fastest</div>"
+                elif badge_trends.get('networker', 0) > badge_trends.get('active', 0) and badge_trends.get('networker', 0) > badge_trends.get('poster', 0):
+                    badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Networker badge achievement increasing fastest</div>"
+                else:
+                    badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Top Poster badge achievement increasing fastest</div>"
+                
+                if abs(badge_trends.get('poster', 0)) < 1:
+                    badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Top Poster badge achievement plateauing</div>"
+                
+                badge_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Regional badge distribution becoming more balanced</div>"
+            else:
+                badge_html = "<div class='insight-item'>Insufficient data for badge achievement trends</div>"
+            
+            trend_subtab1.markdown(f"""
+            <div class="insight-box">
+                <div class="insight-header">Badge Achievement Trends</div>
+                {badge_html}
+                <div class="insight-item">
+                    Users are logging in more frequently, but content creation has plateaued.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Mobile Usage Box
+            mobile_html = ""
+            if mobile_stats:
+                if mobile_stats.get('growth', 0) > 0:
+                    mobile_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Mobile engagement growing faster than web</div>"
+                
+                if mobile_stats.get('profile_ratio', 1) > 1:
+                    mobile_html += "<div class='insight-item'><span class='insight-bullet'>•</span> Profile completion rates higher on mobile platform</div>"
+                
+                if mobile_stats.get('connection_ratio', 1) > 1:
+                    mobile_html += f"<div class='insight-item'><span class='insight-bullet'>•</span> Mobile users have {(mobile_stats['connection_ratio']-1)*100:.0f}% higher average connection counts</div>"
+            else:
+                mobile_html = "<div class='insight-item'>Insufficient data for mobile usage analysis</div>"
+            
+            trend_subtab1.markdown(f"""
+            <div class="insight-box">
+                <div class="insight-header">Mobile Usage</div>
+                {mobile_html}
+                <div class="insight-item">
+                    {("Mobile user experience is driving higher engagement, suggesting investment opportunities." if mobile_stats and mobile_stats.get('connection_ratio', 1) > 1.1 else
+                    "Mobile and web platforms show comparable engagement metrics.")}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         
-        # Calculate new users by period
-        user_growth = df.groupby(time_period_col).size().reset_index()
-        user_growth.columns = ['Period', 'New Users']
+        # Show trend alerts with boxed styling
+        trend_subtab1.subheader("Trend Alerts & Opportunities")
         
-        # Convert period to string for display
-        user_growth['Period'] = user_growth['Period'].astype(str)
+        alerts = []
         
-        # Calculate cumulative users
-        user_growth['Cumulative Users'] = user_growth['New Users'].cumsum()
-        
-        # Calculate growth rate
-        user_growth['Growth Rate'] = user_growth['New Users'].pct_change() * 100
-        
-        # Create the visualization
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
-        
-        # Add bar chart for new users
-        fig.add_trace(
-            go.Bar(
-                x=user_growth['Period'],
-                y=user_growth['New Users'],
-                name="New Users",
-                marker_color='lightblue'
-            )
-        )
-        
-        # Add line chart for cumulative users
-        fig.add_trace(
-            go.Scatter(
-                x=user_growth['Period'],
-                y=user_growth['Cumulative Users'],
-                name="Cumulative Users",
-                marker_color='darkblue',
-                mode='lines+markers'
-            ),
-            secondary_y=True
-        )
-        
-        # Update layout
-        fig.update_layout(
-            title=f"{time_granularity} User Growth Trends",
-            xaxis_title="Time Period",
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1
-            )
-        )
-        
-        fig.update_yaxes(title_text="New Users", secondary_y=False)
-        fig.update_yaxes(title_text="Cumulative Users", secondary_y=True)
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Show regional growth comparison
-        st.subheader("Regional Growth Comparison")
-        
-        # Group by region and period
-        regional_growth = df.groupby(['Country', time_period_col]).size().reset_index()
-        regional_growth.columns = ['Country', 'Period', 'New Users']
-        regional_growth['Period'] = regional_growth['Period'].astype(str)
-        
-        # Get top countries by total users
-        top_countries = df['Country'].value_counts().head(5).index.tolist()
-        
-        # Filter to top countries
-        regional_growth_filtered = regional_growth[regional_growth['Country'].isin(top_countries)]
-        
-        # Create line chart for regional growth
-        fig = px.line(
-            regional_growth_filtered,
-            x='Period',
-            y='New Users',
-            color='Country',
-            title=f"Top 5 Countries: User Growth by {time_granularity} Period",
-            markers=True
-        )
-        
-        fig.update_layout(
-            xaxis_title="Time Period",
-            yaxis_title="New Users",
-            legend_title="Country"
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)      
-    
-        enhanced_career_distribution_analysis(df)
-    
-    # 3. Engagement Metrics Trends
-    if show_engagement_trends:
-        st.header("Engagement Metric Trends")
-        
-        # Calculate engagement metrics by period
-        engagement_metrics = []
-        
-        # Group by period
-        period_groups = df.groupby(time_period_col)
-        
-        for period, group in period_groups:
-            # Calculate metrics
-            metrics = {
-                'Period': str(period),
-                'Total Users': len(group),
-                'Avg Connections': group['total_friend_count'].mean(),
-                'Profile Completion Rate': group['profile_completion'].mean() * 100,
-                'Mobile Usage Rate': group['uses_mobile'].mean() * 100,
-                'Avg Days Since Login': group['days_since_login'].mean()
+        # Mentorship Gap alert
+        if mentorship_gap:
+            mentor_alert = {
+                "type": "opportunity",
+                "title": "Mentorship Gap",
+                "description": "Growing imbalance between Early Career and Senior members suggests opportunity for targeted mentor recruitment.",
+                "metrics": f"Current mentor:mentee ratio is 1:{1/mentorship_gap['current_ratio']:.1f}"
             }
             
-            engagement_metrics.append(metrics)
+            if 'prev_ratio' in mentorship_gap:
+                mentor_alert["metrics"] += f", down from 1:{1/mentorship_gap['prev_ratio']:.1f} last period."
+            else:
+                mentor_alert["metrics"] += "."
+                
+            alerts.append(mentor_alert)
         
-        # Convert to dataframe
-        engagement_df = pd.DataFrame(engagement_metrics)
+        # Mobile Engagement alert
+        if mobile_stats and mobile_stats.get('connection_ratio', 1) > 1.1:
+            mobile_alert = {
+                "type": "success",
+                "title": "Mobile Engagement",
+                "description": "Mobile app adoption is driving higher connection rates and profile completion.",
+                "metrics": f"Mobile users have {(mobile_stats['connection_ratio']-1)*100:.0f}% higher average connection counts than web-only users."
+            }
+            alerts.append(mobile_alert)
         
-        # Melt dataframe for visualization
-        engagement_melt = pd.melt(
-            engagement_df,
-            id_vars=['Period'],
-            value_vars=['Avg Connections', 'Profile Completion Rate', 'Mobile Usage Rate'],
-            var_name='Metric',
-            value_name='Value'
+        # Regional Disparity alert
+        if regional_concentration:
+            region_alert = {
+                "type": "warning",
+                "title": "Regional Disparity",
+                "description": f"User growth is concentrated in {len(top3_countries)} countries while the rest show minimal growth.",
+                "metrics": f"Top 3 countries represent {regional_concentration['top3_pct']:.1f}% of users"
+            }
+            
+            if 'prev_top3_pct' in regional_concentration:
+                if regional_concentration['concentration_change'] > 0:
+                    region_alert["metrics"] += f", up from {regional_concentration['prev_top3_pct']:.1f}% last period."
+                else:
+                    region_alert["metrics"] += f", down from {regional_concentration['prev_top3_pct']:.1f}% last period."
+            else:
+                region_alert["metrics"] += "."
+                
+            alerts.append(region_alert)
+        
+        # Show alerts with boxed formatting
+        for i, alert in enumerate(alerts):
+            color = "#10b981" if alert["type"] == "success" else "#f59e0b" if alert["type"] == "warning" else "#3b82f6"
+            icon = "✅" if alert["type"] == "success" else "⚠️" if alert["type"] == "warning" else "💡"
+            
+            trend_subtab1.markdown(f"""
+            <div class="insight-box" style="border-left: 4px solid {color};">
+                <div class="insight-header">{icon} {alert['title']}</div>
+                <div class="insight-item">{alert['description']}</div>
+                <div class="insight-item" style="font-size: 0.9rem; color: #6b7280;"><i>{alert['metrics']}</i></div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # If not enough data for insights, show a message
+        if not alerts:
+            trend_subtab1.info("Insufficient historical data to generate trend insights. Please check back when more data is available.")
+        
+        # Continue with the rest of the dashboard (controls and visualizations)
+        trend_subtab1.header("Detailed Trend Analysis")
+        
+        # Select time granularity
+        time_granularity = trend_subtab1.radio(
+            "Time Period Granularity",
+            options=["Monthly", "Quarterly"],
+            horizontal=True
         )
         
-        # Create line chart
-        fig = px.line(
-            engagement_melt,
-            x='Period',
-            y='Value',
-            color='Metric',
-            title=f"Engagement Metrics by {time_granularity} Period",
-            markers=True
+        # Select metrics to analyze
+        trend_subtab1.subheader("Select Metrics to Analyze")
+        col1, col2 = trend_subtab1.columns(2)
+        
+        with col1:
+            show_user_growth = col1.checkbox("User Growth", value=True)
+            show_career_trends = col1.checkbox("Career Level Distribution", value=True)
+        
+        with col2:
+            show_engagement_trends = col2.checkbox("Engagement Metrics", value=True)
+            show_badge_trends = col2.checkbox("Badge Achievement", value=True)
+        
+        # Define time period column based on selection
+        time_period_col = 'login_month' if time_granularity == "Monthly" else 'login_quarter'
+        
+        # 1. User Growth Analysis
+        if show_user_growth:
+            trend_subtab1.header("User Growth Trends")
+            
+            # Calculate new users by period
+            user_growth = df.groupby(time_period_col).size().reset_index()
+            user_growth.columns = ['Period', 'New Users']
+            
+            # Convert period to string for display
+            user_growth['Period'] = user_growth['Period'].astype(str)
+            
+            # Calculate cumulative users
+            user_growth['Cumulative Users'] = user_growth['New Users'].cumsum()
+            
+            # Calculate growth rate
+            user_growth['Growth Rate'] = user_growth['New Users'].pct_change() * 100
+            
+            # Create the visualization
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
+            
+            # Add bar chart for new users
+            fig.add_trace(
+                go.Bar(
+                    x=user_growth['Period'],
+                    y=user_growth['New Users'],
+                    name="New Users",
+                    marker_color='lightblue'
+                )
+            )
+            
+            # Add line chart for cumulative users
+            fig.add_trace(
+                go.Scatter(
+                    x=user_growth['Period'],
+                    y=user_growth['Cumulative Users'],
+                    name="Cumulative Users",
+                    marker_color='darkblue',
+                    mode='lines+markers'
+                ),
+                secondary_y=True
+            )
+            
+            # Update layout
+            fig.update_layout(
+                title=f"{time_granularity} User Growth Trends",
+                xaxis_title="Time Period",
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+            
+            fig.update_yaxes(title_text="New Users", secondary_y=False)
+            fig.update_yaxes(title_text="Cumulative Users", secondary_y=True)
+            
+            trend_subtab1.plotly_chart(fig, use_container_width=True)
+            
+            # Show regional growth comparison
+            trend_subtab1.subheader("Regional Growth Comparison")
+            
+            # Group by region and period
+            regional_growth = df.groupby(['Country', time_period_col]).size().reset_index()
+            regional_growth.columns = ['Country', 'Period', 'New Users']
+            regional_growth['Period'] = regional_growth['Period'].astype(str)
+            
+            # Get top countries by total users
+            top_countries = df['Country'].value_counts().head(5).index.tolist()
+            
+            # Filter to top countries
+            regional_growth_filtered = regional_growth[regional_growth['Country'].isin(top_countries)]
+            
+            # Create line chart for regional growth
+            fig = px.line(
+                regional_growth_filtered,
+                x='Period',
+                y='New Users',
+                color='Country',
+                title=f"Top 5 Countries: User Growth by {time_granularity} Period",
+                markers=True
+            )
+            
+            fig.update_layout(
+                xaxis_title="Time Period",
+                yaxis_title="New Users",
+                legend_title="Country"
+            )
+            
+            trend_subtab1.plotly_chart(fig, use_container_width=True)
+            
+            # Call enhanced_career_distribution_analysis if it exists in your code
+            if 'enhanced_career_distribution_analysis' in globals():
+                enhanced_career_distribution_analysis(df)
+        
+        # 3. Engagement Metrics Trends
+        if show_engagement_trends:
+            trend_subtab1.header("Engagement Metric Trends")
+            
+            # Calculate engagement metrics by period
+            engagement_metrics = []
+            
+            # Group by period
+            period_groups = df.groupby(time_period_col)
+            
+            for period, group in period_groups:
+                # Calculate metrics
+                metrics = {
+                    'Period': str(period),
+                    'Total Users': len(group),
+                    'Avg Connections': group['total_friend_count'].mean(),
+                    'Profile Completion Rate': group['profile_completion'].mean() * 100,
+                    'Mobile Usage Rate': group['uses_mobile'].mean() * 100,
+                    'Avg Days Since Login': group['days_since_login'].mean()
+                }
+                
+                engagement_metrics.append(metrics)
+            
+            # Convert to dataframe
+            engagement_df = pd.DataFrame(engagement_metrics)
+            
+            # Melt dataframe for visualization
+            engagement_melt = pd.melt(
+                engagement_df,
+                id_vars=['Period'],
+                value_vars=['Avg Connections', 'Profile Completion Rate', 'Mobile Usage Rate'],
+                var_name='Metric',
+                value_name='Value'
+            )
+            
+            # Create line chart
+            fig = px.line(
+                engagement_melt,
+                x='Period',
+                y='Value',
+                color='Metric',
+                title=f"Engagement Metrics by {time_granularity} Period",
+                markers=True
+            )
+            
+            fig.update_layout(
+                xaxis_title="Time Period",
+                yaxis_title="Value",
+                legend_title="Metric"
+            )
+            
+            trend_subtab1.plotly_chart(fig, use_container_width=True)
+    
+    with trend_subtab2:
+        # Your existing engagement patterns analysis code
+        # Add any existing visualizations and analyses for engagement patterns here
+        trend_subtab2.header("User Engagement Patterns")
+        
+        # Example: Login day of week distribution
+        df['login_day'] = df['last_login_date'].dt.day_name()
+        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        day_counts = df['login_day'].value_counts().reindex(day_order).reset_index()
+        day_counts.columns = ['Day', 'Count']
+        
+        # Create a bar chart for day of week distribution
+        fig = px.bar(
+            day_counts,
+            x='Day',
+            y='Count',
+            title='Login Activity by Day of Week',
+            color_discrete_sequence=['#1f77b4']
+        )
+        
+        trend_subtab2.plotly_chart(fig, use_container_width=True)
+        
+        # Example: Time of day analysis
+        if 'last_login_time' in df.columns:
+            df['login_hour'] = df['last_login_date'].dt.hour
+            hour_counts = df.groupby('login_hour').size().reset_index()
+            hour_counts.columns = ['Hour', 'Count']
+            
+            # Create a line chart for time of day distribution
+            fig = px.line(
+                hour_counts,
+                x='Hour',
+                y='Count',
+                title='Login Activity by Hour of Day',
+                markers=True
+            )
+            
+            fig.update_layout(
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=list(range(0, 24, 2)),
+                    ticktext=[f"{h:02d}:00" for h in range(0, 24, 2)]
+                )
+            )
+            
+            trend_subtab2.plotly_chart(fig, use_container_width=True)
+        
+        # Example: Session duration distribution (if available)
+        if 'session_duration' in df.columns:
+            # Create a histogram for session duration
+            fig = px.histogram(
+                df,
+                x='session_duration',
+                nbins=20,
+                title='Session Duration Distribution',
+                labels={'session_duration': 'Session Duration (minutes)'}
+            )
+            
+            trend_subtab2.plotly_chart(fig, use_container_width=True)
+        
+        # Example: Platform usage comparison
+        if 'platform' in df.columns or 'App' in df.columns:
+            platform_col = 'platform' if 'platform' in df.columns else 'App'
+            platform_counts = df[platform_col].value_counts().reset_index()
+            platform_counts.columns = ['Platform', 'Count']
+            
+            # Create a pie chart for platform distribution
+            fig = px.pie(
+                platform_counts,
+                values='Count',
+                names='Platform',
+                title='Platform Usage Distribution'
+            )
+            
+            trend_subtab2.plotly_chart(fig, use_container_width=True)
+        
+        # Feature usage patterns (example)
+        trend_subtab2.subheader("Feature Usage Analysis")
+        trend_subtab2.markdown("""
+        This analysis examines which features are most frequently used by members.
+        The data helps prioritize development resources and identify underutilized features.
+        """)
+        
+        # Create simulated feature usage data
+        feature_usage = pd.DataFrame({
+            'Feature': ['Profile Viewing', 'Connections', 'Messaging', 'Job Board', 'Events', 'Learning Resources'],
+            'Usage Rate': [0.85, 0.72, 0.58, 0.42, 0.38, 0.25]
+        })
+        
+        # Create bar chart for feature usage
+        fig = px.bar(
+            feature_usage,
+            x='Feature',
+            y='Usage Rate',
+            title='Feature Usage Rates',
+            color='Usage Rate',
+            color_continuous_scale='Viridis'
         )
         
         fig.update_layout(
-            xaxis_title="Time Period",
-            yaxis_title="Value",
-            legend_title="Metric"
+            yaxis=dict(tickformat='.0%'),
+            coloraxis_colorbar=dict(tickformat='.0%')
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        trend_subtab2.plotly_chart(fig, use_container_width=True)
+    
+    with trend_subtab3:
+        # Call the market opportunity analysis function with the sub-tab as parent
+        create_market_opportunity_analysis(df, parent_tab=trend_subtab3)
         
 
 def prepare_forecast_data(data):
