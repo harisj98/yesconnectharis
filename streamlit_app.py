@@ -5616,36 +5616,6 @@ def main():
             Use this as a reference when interpreting dashboard insights and making business decisions.
             """)
             
-            # User Profile Attributes
-            st.subheader("User Profile Attributes")
-            profile_metrics = [
-                {
-                    "Metric": "Career Level",
-                    "Definition": "Self-reported professional status of the member",
-                    "Business Significance": "Indicates member's position in career journey and likely networking needs"
-                },
-                {
-                    "Metric": "Experience Level",
-                    "Definition": "Years of professional experience reported by member",
-                    "Business Significance": "Proxy for seniority and expertise level; correlates with mentorship potential"
-                },
-                {
-                    "Metric": "Country",
-                    "Definition": "Member's self-reported country of residence",
-                    "Business Significance": "Geographic segmentation for regional initiatives and network development"
-                },
-                {
-                    "Metric": "Industry",
-                    "Definition": "Member's self-reported industry sector",
-                    "Business Significance": "Area of professional focus; used for connecting similar professionals"
-                },
-                {
-                    "Metric": "Profile Avatar Created",
-                    "Definition": "Whether member has uploaded a profile picture",
-                    "Business Significance": "Key engagement indicator and profile completeness metric; affects trust among members"
-                }
-            ]
-            
             # Create a fancy dataframe display with Streamlit
             st.dataframe(pd.DataFrame(profile_metrics), use_container_width=True)
             
@@ -5680,21 +5650,38 @@ def main():
             st.subheader("Derived & Calculated Metrics")
             derived_metrics = [
                 {
-                    "Metric": "Profile Completion Score",
-                    "Definition": "Binary indicator (0/1) based on avatar creation",
-                    "Business Significance": "Simplified measure of profile completeness; predictor of member engagement"
+                    "Metric": "recent_activity",
+                    "Definition": "(users_active_in_last_30_days / total_users_in_country)"
                 },
                 {
-                    "Metric": "Login Frequency",
-                    "Definition": "Count of unique login dates per member",
-                    "Business Significance": "Measure of habitual platform usage; indicates stickiness"
+                    "Metric": "networker_rate",
+                    "Definition": "(users_with_10+_connections / total_users_in_country)"
                 },
                 {
-                    "Metric": "Mobile Usage Flag",
-                    "Definition": "Binary indicator (0/1) if member uses mobile apps",
-                    "Business Significance": "Distinguishes mobile from web-only users for targeted feature development"
+                    "Metric": "profile_completion",
+                    "Definition": "(users_with_completed_profiles / total_users_in_country)"
+                }
+            ],
+                {
+                    "Metric": "market_penetration",
+                    "Definition": "market_penetration = log(member_count) / log(max_in_country)"
+                }
+            ],
+                {
+                    "Metric": "mobile_adoption",
+                    "Definition": "mobile_adoption = (mobile_users / total_users_in_country)"
+                }
+            ],
+                {
+                    "Metric": "growth_potential",
+                    "Definition": " growth_potential = (room_to_grow_weight * room_to_grow) +
+                   (profile_completion_weight * profile_completion) +
+                   (recent_activity_weight * recent_activity) +
+                   (networker_rate_weight * networker_rate) +
+                   (mobile_adoption_weight * mobile_adoption)"
                 }
             ]
+
             
             st.dataframe(pd.DataFrame(derived_metrics), use_container_width=True)
             
