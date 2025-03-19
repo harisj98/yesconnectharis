@@ -5668,14 +5668,6 @@ def main():
                 {
                     "Metric": "mobile_adoption",
                     "Definition": "mobile_adoption = (mobile_users / total_users_in_country)"
-                },
-                {
-                    "Metric": "growth_potential",
-                    "Definition": " growth_potential = (room_to_grow_weight * room_to_grow) +
-                   (profile_completion_weight * profile_completion) +
-                   (recent_activity_weight * recent_activity) +
-                   (networker_rate_weight * networker_rate) +
-                   (mobile_adoption_weight * mobile_adoption)"
                 }
             ]
 
