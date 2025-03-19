@@ -2478,6 +2478,8 @@ def trend_analysis_tab(df):
             
             trend_subtab1.plotly_chart(fig, use_container_width=True)
 
+            enhanced_career_distribution_analysis(df)
+
         
         # 3. Engagement Metrics Trends
         if show_engagement_trends:
