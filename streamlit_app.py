@@ -2423,65 +2423,6 @@ def trend_analysis_tab(df):
             </div>
             """, unsafe_allow_html=True)
             
-            # Add visualization for Mentorship Gap alert
-            if alert["title"] == "Mentorship Gap" and mentorship_gap and 'prev_ratio' in mentorship_gap:
-                # Create a simple ratio comparison visualization
-                current_ratio = 1/mentorship_gap['current_ratio']
-                prev_ratio = 1/mentorship_gap['prev_ratio']
-                
-                # Create a DataFrame for the ratio comparison
-                ratio_df = pd.DataFrame({
-                    'Period': ['Previous Period', 'Current Period'],
-                    'Mentees per Mentor': [prev_ratio, current_ratio]
-                })
-                
-                # Create bar chart
-                fig = px.bar(
-                    ratio_df,
-                    x='Period',
-                    y='Mentees per Mentor',
-                    color='Period',
-                    title='Mentee to Mentor Ratio Comparison',
-                    color_discrete_map={
-                        'Previous Period': '#9ca3af',
-                        'Current Period': '#3b82f6'
-                    }
-                )
-                
-                # Add target ratio line (1:5 is often considered a good benchmark)
-                fig.add_shape(
-                    type="line",
-                    x0=-0.5,
-                    y0=5,
-                    x1=1.5,
-                    y1=5,
-                    line=dict(
-                        color="green",
-                        width=2,
-                        dash="dash",
-                    )
-                )
-                
-                # Add annotation for target ratio
-                fig.add_annotation(
-                    x=1.3,
-                    y=5,
-                    text="Target Ratio (1:5)",
-                    showarrow=False,
-                    font=dict(color="green"),
-                    xanchor="left"
-                )
-                
-                # Formatting
-                fig.update_layout(
-                    height=300,
-                    xaxis=dict(title=''),
-                    yaxis=dict(title='Number of Mentees per Mentor'),
-                    plot_bgcolor='white'
-                )
-                
-                # Display the visualization
-                trend_subtab1.plotly_chart(fig, use_container_width=True)
                 
                 # Add explanation about career levels and definitions
                 trend_subtab1.markdown("""
