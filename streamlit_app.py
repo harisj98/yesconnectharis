@@ -1504,7 +1504,7 @@ def plot_model_performance(model_type, X_test, y_test):
     st.header("User Segment Cluster Visualization")
 
 # Define your consistent segment names and colors
-    segment_colors = {
+        segment_colors = {
         "Network Builders": "#1e88e5",     # Blue
         "Established Experts": "#43a047",  # Green
         "Academic Engagers": "#fb8c00",    # Orange
