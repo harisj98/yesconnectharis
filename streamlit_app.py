@@ -507,8 +507,8 @@ def enhanced_career_distribution_analysis(df):
     ]
     
     # Define mentor and mentee career levels
-    mentor_levels = ['Senior', 'Executive', 'Mid-Level Industry Professional']
-    mentee_levels = ['Student', 'Entry', 'Early Career Professional']
+    mentor_levels = ['Senior Industry Professional', 'Educator', 'Mid-Level Industry Professional','Training/Initiative Provider']
+    mentee_levels = ['Student', 'Early Career Professional']
     
     # Function to create career distribution and mentor-mentee metrics
     def calculate_metrics(period_data, period_name):
