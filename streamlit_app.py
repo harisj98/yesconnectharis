@@ -2425,7 +2425,7 @@ def trend_analysis_tab(df):
             
                 
                 # Add explanation about career levels and definitions
-                trend_subtab1.markdown("""
+            trend_subtab1.markdown("""
                 <div class="insight-box">
                     <div class="insight-header">Career Level Definitions</div>
                     <div class="insight-item">
