@@ -5690,7 +5690,7 @@ def main():
 
             # Configure the layout
             fig.update_layout(
-                title="User Segment Clustering Visualization",
+                title="User Segment Clustering Visualisation",
                 xaxis=dict(
                     title="Connection Count",
                     tickmode='linear',
