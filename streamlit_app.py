@@ -2391,20 +2391,7 @@ def trend_analysis_tab(df):
         # If not enough data for insights, show a message
         if not alerts:
             trend_subtab1.info("Insufficient historical data to generate trend insights. Please check back when more data is available.")
-
-# Show alerts with boxed formatting
-        for i, alert in enumerate(alerts):
-            color = "#10b981" if alert["type"] == "success" else "#f59e0b" if alert["type"] == "warning" else "#3b82f6"
-            icon = "✅" if alert["type"] == "success" else "⚠️" if alert["type"] == "warning" else "💡"
-            
-            trend_subtab1.markdown(f"""
-            <div class="insight-box" style="border-left: 4px solid {color};">
-                <div class="insight-header">{icon} {alert['title']}</div>
-                <div class="insight-item">{alert['description']}</div>
-                <div class="insight-item" style="font-size: 0.9rem; color: #6b7280;"><i>{alert['metrics']}</i></div>
-            </div>
-            """, unsafe_allow_html=True)
-            
+           
 
         # Continue with the rest of the dashboard (controls and visualizations)
         trend_subtab1.header("Detailed Trend Analysis")
