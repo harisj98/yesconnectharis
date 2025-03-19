@@ -5615,10 +5615,7 @@ def main():
             This data dictionary provides definitions and business context for all metrics used in the YES! Connect analytics platform.
             Use this as a reference when interpreting dashboard insights and making business decisions.
             """)
-            
-            # Create a fancy dataframe display with Streamlit
-            st.dataframe(pd.DataFrame(profile_metrics), use_container_width=True)
-            
+                       
             # Engagement Metrics
             st.subheader("Engagement & Activity Metrics")
             engagement_metrics = [
