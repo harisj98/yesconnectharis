@@ -2141,7 +2141,7 @@ def trend_analysis_tab(df):
             </div>
             """, unsafe_allow_html=True)
         # Add time series visualizations
-        trend_subtab1.header("Growth Trends Visualization")
+        trend_subtab1.header("Growth Trends Visualisation")
 
         # Time Series for User Growth Rate
         trend_subtab1.subheader("Monthly User Growth Rate Over Time")
