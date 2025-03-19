@@ -5470,7 +5470,7 @@ def main():
             with st.expander("View Original Cluster Analysis"):
 
             # Define segment colors for consistency
-            segment_colors = {
+                segment_colors = {
                 "Network Builders": "#1e88e5",     # Blue
                 "Established Experts": "#43a047",  # Green
                 "Academic Engagers": "#fb8c00",    # Orange
@@ -5479,7 +5479,7 @@ def main():
             }
 
             # Ensure we have the segment column properly mapped
-            segment_mapping = {
+                segment_mapping = {
                 0: "Network Builders",
                 1: "Academic Engagers",
                 2: "Emerging Professionals", 
