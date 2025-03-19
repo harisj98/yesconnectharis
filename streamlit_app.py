@@ -5660,18 +5660,15 @@ def main():
                 {
                     "Metric": "profile_completion",
                     "Definition": "(users_with_completed_profiles / total_users_in_country)"
-                }
-            ],
+                },
                 {
                     "Metric": "market_penetration",
                     "Definition": "market_penetration = log(member_count) / log(max_in_country)"
-                }
-            ],
+                },
                 {
                     "Metric": "mobile_adoption",
                     "Definition": "mobile_adoption = (mobile_users / total_users_in_country)"
-                }
-            ],
+                },
                 {
                     "Metric": "growth_potential",
                     "Definition": " growth_potential = (room_to_grow_weight * room_to_grow) +
