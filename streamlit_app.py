@@ -2409,6 +2409,138 @@ def trend_analysis_tab(df):
         # If not enough data for insights, show a message
         if not alerts:
             trend_subtab1.info("Insufficient historical data to generate trend insights. Please check back when more data is available.")
+
+# Show alerts with boxed formatting
+        for i, alert in enumerate(alerts):
+            color = "#10b981" if alert["type"] == "success" else "#f59e0b" if alert["type"] == "warning" else "#3b82f6"
+            icon = "✅" if alert["type"] == "success" else "⚠️" if alert["type"] == "warning" else "💡"
+            
+            trend_subtab1.markdown(f"""
+            <div class="insight-box" style="border-left: 4px solid {color};">
+                <div class="insight-header">{icon} {alert['title']}</div>
+                <div class="insight-item">{alert['description']}</div>
+                <div class="insight-item" style="font-size: 0.9rem; color: #6b7280;"><i>{alert['metrics']}</i></div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Add visualization for Mentorship Gap alert
+            if alert["title"] == "Mentorship Gap" and mentorship_gap and 'prev_ratio' in mentorship_gap:
+                # Create a simple ratio comparison visualization
+                current_ratio = 1/mentorship_gap['current_ratio']
+                prev_ratio = 1/mentorship_gap['prev_ratio']
+                
+                # Create a DataFrame for the ratio comparison
+                ratio_df = pd.DataFrame({
+                    'Period': ['Previous Period', 'Current Period'],
+                    'Mentees per Mentor': [prev_ratio, current_ratio]
+                })
+                
+                # Create bar chart
+                fig = px.bar(
+                    ratio_df,
+                    x='Period',
+                    y='Mentees per Mentor',
+                    color='Period',
+                    title='Mentee to Mentor Ratio Comparison',
+                    color_discrete_map={
+                        'Previous Period': '#9ca3af',
+                        'Current Period': '#3b82f6'
+                    }
+                )
+                
+                # Add target ratio line (1:5 is often considered a good benchmark)
+                fig.add_shape(
+                    type="line",
+                    x0=-0.5,
+                    y0=5,
+                    x1=1.5,
+                    y1=5,
+                    line=dict(
+                        color="green",
+                        width=2,
+                        dash="dash",
+                    )
+                )
+                
+                # Add annotation for target ratio
+                fig.add_annotation(
+                    x=1.3,
+                    y=5,
+                    text="Target Ratio (1:5)",
+                    showarrow=False,
+                    font=dict(color="green"),
+                    xanchor="left"
+                )
+                
+                # Formatting
+                fig.update_layout(
+                    height=300,
+                    xaxis=dict(title=''),
+                    yaxis=dict(title='Number of Mentees per Mentor'),
+                    plot_bgcolor='white'
+                )
+                
+                # Display the visualization
+                trend_subtab1.plotly_chart(fig, use_container_width=True)
+                
+                # Add explanation about career levels and definitions
+                trend_subtab1.markdown("""
+                <div class="insight-box">
+                    <div class="insight-header">Career Level Definitions</div>
+                    <div class="insight-item">
+                        <strong>Mentors (Senior Members):</strong> Users with career levels categorized as "Senior", "Executive", or "Mid-Level Industry Professional". These members have the experience and knowledge to guide others.
+                    </div>
+                    <div class="insight-item">
+                        <strong>Mentees (Early Career):</strong> Users with career levels categorized as "Student", "Entry", or "Early Career Professional". These members benefit most from guidance and mentorship.
+                    </div>
+                    <div class="insight-item">
+                        <strong>Target Ratio:</strong> An ideal mentor-to-mentee ratio is approximately 1:5, balancing mentor availability with mentee needs. The current trend shows an increasing imbalance that may affect member satisfaction and retention.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Add detailed ratio table
+                trend_subtab1.subheader("Mentorship Distribution by Career Level")
+                
+                # Create a more detailed breakdown if we have the data
+                mentor_levels = ['Senior', 'Executive', 'Mid-Level Industry Professional']
+                mentee_levels = ['Student', 'Entry', 'Early Career Professional']
+                
+                # Count users in each category
+                mentor_counts = {}
+                mentee_counts = {}
+                
+                for level in mentor_levels:
+                    count = len(df[df['Career Level'] == level])
+                    mentor_counts[level] = count
+                
+                for level in mentee_levels:
+                    count = len(df[df['Career Level'] == level])
+                    mentee_counts[level] = count
+                
+                # Create two-column layout
+                col1, col2 = trend_subtab1.columns(2)
+                
+                with col1:
+                    # Mentors table
+                    mentor_df = pd.DataFrame({
+                        'Career Level': list(mentor_counts.keys()),
+                        'Count': list(mentor_counts.values())
+                    })
+                    mentor_df['Percentage'] = (mentor_df['Count'] / mentor_df['Count'].sum() * 100).round(1)
+                    col1.markdown("#### Mentor Distribution")
+                    col1.dataframe(mentor_df, hide_index=True)
+                
+                with col2:
+                    # Mentees table
+                    mentee_df = pd.DataFrame({
+                        'Career Level': list(mentee_counts.keys()),
+                        'Count': list(mentee_counts.values())
+                    })
+                    mentee_df['Percentage'] = (mentee_df['Count'] / mentee_df['Count'].sum() * 100).round(1)
+                    col2.markdown("#### Mentee Distribution")
+                    col2.dataframe(mentee_df, hide_index=True)
+
         
         # Continue with the rest of the dashboard (controls and visualizations)
         trend_subtab1.header("Detailed Trend Analysis")
