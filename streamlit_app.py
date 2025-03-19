@@ -2373,25 +2373,7 @@ def trend_analysis_tab(df):
                 "metrics": f"Mobile users have {(mobile_stats['connection_ratio']-1)*100:.0f}% higher average connection counts than web-only users."
             }
             alerts.append(mobile_alert)
-        
-        # Regional Disparity alert
-        if regional_concentration:
-            region_alert = {
-                "type": "warning",
-                "title": "Regional Disparity",
-                "description": f"User growth is concentrated in {len(top3_countries)} countries while the rest show minimal growth.",
-                "metrics": f"Top 3 countries represent {regional_concentration['top3_pct']:.1f}% of users"
-            }
-            
-            if 'prev_top3_pct' in regional_concentration:
-                if regional_concentration['concentration_change'] > 0:
-                    region_alert["metrics"] += f", up from {regional_concentration['prev_top3_pct']:.1f}% last period."
-                else:
-                    region_alert["metrics"] += f", down from {regional_concentration['prev_top3_pct']:.1f}% last period."
-            else:
-                region_alert["metrics"] += "."
-                
-            alerts.append(region_alert)
+
         
         # Show alerts with boxed formatting
         for i, alert in enumerate(alerts):
