@@ -2488,10 +2488,10 @@ def trend_analysis_tab(df):
                 <div class="insight-box">
                     <div class="insight-header">Career Level Definitions</div>
                     <div class="insight-item">
-                        <strong>Mentors (Senior Members):</strong> Users with career levels categorized as "Senior", "Executive", or "Mid-Level Industry Professional". These members have the experience and knowledge to guide others.
+                        <strong>Mentors (Senior Members):</strong> Users with career levels categorized as "Senior", "Educator", or "Mid-Level Industry Professional". These members have the experience and knowledge to guide others.
                     </div>
                     <div class="insight-item">
-                        <strong>Mentees (Early Career):</strong> Users with career levels categorized as "Student", "Entry", or "Early Career Professional". These members benefit most from guidance and mentorship.
+                        <strong>Mentees (Early Career):</strong> Users with career levels categorized as "Student", or "Early Career Professional". These members benefit most from guidance and mentorship.
                     </div>
                     <div class="insight-item">
                         <strong>Target Ratio:</strong> An ideal mentor-to-mentee ratio is approximately 1:5, balancing mentor availability with mentee needs. The current trend shows an increasing imbalance that may affect member satisfaction and retention.
@@ -2503,8 +2503,8 @@ def trend_analysis_tab(df):
                 trend_subtab1.subheader("Mentorship Distribution by Career Level")
                 
                 # Create a more detailed breakdown if we have the data
-                mentor_levels = ['Senior', 'Executive', 'Mid-Level Industry Professional']
-                mentee_levels = ['Student', 'Entry', 'Early Career Professional']
+                mentor_levels = ['Senior Industry Professional', 'Educator', 'Mid-Level Industry Professional']
+                mentee_levels = ['Student', 'Early Career Professional']
                 
                 # Count users in each category
                 mentor_counts = {}
