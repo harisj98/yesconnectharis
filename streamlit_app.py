@@ -2508,42 +2508,7 @@ def trend_analysis_tab(df):
             fig.update_yaxes(title_text="Cumulative Users", secondary_y=True)
             
             trend_subtab1.plotly_chart(fig, use_container_width=True)
-            
-            # Show regional growth comparison
-            trend_subtab1.subheader("Regional Growth Comparison")
-            
-            # Group by region and period
-            regional_growth = df.groupby(['Country', time_period_col]).size().reset_index()
-            regional_growth.columns = ['Country', 'Period', 'New Users']
-            regional_growth['Period'] = regional_growth['Period'].astype(str)
-            
-            # Get top countries by total users
-            top_countries = df['Country'].value_counts().head(5).index.tolist()
-            
-            # Filter to top countries
-            regional_growth_filtered = regional_growth[regional_growth['Country'].isin(top_countries)]
-            
-            # Create line chart for regional growth
-            fig = px.line(
-                regional_growth_filtered,
-                x='Period',
-                y='New Users',
-                color='Country',
-                title=f"Top 5 Countries: User Growth by {time_granularity} Period",
-                markers=True
-            )
-            
-            fig.update_layout(
-                xaxis_title="Time Period",
-                yaxis_title="New Users",
-                legend_title="Country"
-            )
-            
-            trend_subtab1.plotly_chart(fig, use_container_width=True)
-            
-            # Call enhanced_career_distribution_analysis if it exists in your code
-            if 'enhanced_career_distribution_analysis' in globals():
-                enhanced_career_distribution_analysis(df)
+
         
         # 3. Engagement Metrics Trends
         if show_engagement_trends:
