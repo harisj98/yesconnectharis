@@ -2140,7 +2140,208 @@ def trend_analysis_tab(df):
                 </div>
             </div>
             """, unsafe_allow_html=True)
-        
+        # Add time series visualizations
+        trend_subtab1.header("Growth Trends Visualization")
+
+        # Time Series for User Growth Rate
+        trend_subtab1.subheader("Monthly User Growth Rate Over Time")
+
+        # Check if we have enough data for time series
+        if len(df['login_month'].unique()) >= 3:  # Need at least 3 months for a trend
+            # Calculate monthly user counts
+            monthly_users_df = df.groupby(df['last_login_date'].dt.to_period('M')).size().reset_index()
+            monthly_users_df.columns = ['Month', 'New Users']
+            
+            # Convert Period to string for Plotly
+            monthly_users_df['Month'] = monthly_users_df['Month'].astype(str)
+            
+            # Calculate growth rate month-over-month
+            monthly_users_df['Growth Rate'] = monthly_users_df['New Users'].pct_change() * 100
+            
+            # Drop the first row since it has no growth rate (NaN)
+            growth_rate_df = monthly_users_df.dropna()
+            
+            # Create a line chart for growth rate
+            fig_growth_rate = go.Figure()
+            
+            # Add the line
+            fig_growth_rate.add_trace(go.Scatter(
+                x=growth_rate_df['Month'],
+                y=growth_rate_df['Growth Rate'],
+                mode='lines+markers',
+                line=dict(color='#3b82f6', width=3),
+                marker=dict(
+                    size=8,
+                    color=growth_rate_df['Growth Rate'].apply(
+                        lambda x: '#10b981' if x > 0 else '#ef4444'
+                    ),
+                    line=dict(width=2, color='#ffffff')
+                ),
+                name='Growth Rate'
+            ))
+            
+            # Add a horizontal line at 0% (separating growth from decline)
+            fig_growth_rate.add_shape(
+                type='line',
+                x0=growth_rate_df['Month'].iloc[0],
+                y0=0,
+                x1=growth_rate_df['Month'].iloc[-1],
+                y1=0,
+                line=dict(color='rgba(0,0,0,0.3)', width=2, dash='dash')
+            )
+            
+            # Customize layout
+            fig_growth_rate.update_layout(
+                xaxis_title='Month',
+                yaxis_title='Growth Rate (%)',
+                yaxis=dict(
+                    zeroline=False,
+                    ticksuffix='%'
+                ),
+                hovermode='x unified',
+                plot_bgcolor='white',
+                margin=dict(l=10, r=10, t=10, b=10),
+                height=350
+            )
+            
+            # Add annotations for key points
+            latest_rate = growth_rate_df['Growth Rate'].iloc[-1]
+            color = '#10b981' if latest_rate > 0 else '#ef4444'
+            
+            fig_growth_rate.add_annotation(
+                x=growth_rate_df['Month'].iloc[-1],
+                y=latest_rate,
+                text=f"{latest_rate:.1f}%",
+                showarrow=True,
+                arrowhead=1,
+                arrowcolor=color,
+                font=dict(color=color, size=14),
+                arrowsize=1,
+                ax=0,
+                ay=-40
+            )
+            
+            trend_subtab1.plotly_chart(fig_growth_rate, use_container_width=True)
+            
+            # Add insights about the trend
+            avg_rate = growth_rate_df['Growth Rate'].mean()
+            trend_direction = "upward" if latest_rate > avg_rate else "downward"
+            
+            trend_subtab1.markdown(f"""
+            <div class="insight-box">
+                <div class="insight-header">Growth Rate Analysis</div>
+                <div class="insight-item">
+                    Current monthly growth rate is <span class="{'positive-trend' if latest_rate > 0 else 'negative-trend'}">{latest_rate:.1f}%</span> compared to an average of {avg_rate:.1f}% over the analyzed period.
+                </div>
+                <div class="insight-item">
+                    The overall trend is {trend_direction}, suggesting {'a positive momentum' if trend_direction == 'upward' else 'a need for intervention in user acquisition strategies'}.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        else:
+            trend_subtab1.info("Insufficient historical data to generate growth rate time series. Need at least 3 months of data.")
+
+        # Time Series for Top Growing Countries
+        trend_subtab1.subheader("Country Growth Trends")
+
+        # Group user data by country and month
+        if len(df['login_month'].unique()) >= 2:
+            # Get top 5 countries by total users
+            top_countries = df['Country'].value_counts().nlargest(5).index.tolist()
+            
+            # Filter for only top countries
+            top_countries_df = df[df['Country'].isin(top_countries)]
+            
+            # Group by country and month
+            country_monthly = top_countries_df.groupby(['Country', pd.Grouper(key='last_login_date', freq='M')]).size().reset_index()
+            country_monthly.columns = ['Country', 'Month', 'User Count']
+            
+            # Convert to datetime for proper sorting
+            country_monthly['Month'] = pd.to_datetime(country_monthly['Month'])
+            
+            # Create a line chart for country growth
+            fig_country_growth = px.line(
+                country_monthly,
+                x='Month',
+                y='User Count',
+                color='Country',
+                markers=True,
+                title='User Growth by Country Over Time',
+                color_discrete_sequence=px.colors.qualitative.Set1
+            )
+            
+            # Customize layout
+            fig_country_growth.update_layout(
+                xaxis_title='Month',
+                yaxis_title='Number of Users',
+                legend_title='Country',
+                hovermode='x unified',
+                plot_bgcolor='white',
+                height=400
+            )
+            
+            # Update line thickness and marker size
+            fig_country_growth.update_traces(
+                line=dict(width=3),
+                marker=dict(size=8)
+            )
+            
+            trend_subtab1.plotly_chart(fig_country_growth, use_container_width=True)
+            
+            # Calculate growth rates for the last month
+            last_two_months = sorted(country_monthly['Month'].unique())[-2:]
+            if len(last_two_months) >= 2:
+                last_month = last_two_months[-1]
+                prev_month = last_two_months[-2]
+                
+                last_month_data = country_monthly[country_monthly['Month'] == last_month]
+                prev_month_data = country_monthly[country_monthly['Month'] == prev_month]
+                
+                # Merge data for comparison
+                growth_comparison = pd.merge(
+                    last_month_data, 
+                    prev_month_data, 
+                    on='Country', 
+                    suffixes=('_last', '_prev')
+                )
+                
+                # Calculate growth rate
+                growth_comparison['Growth Rate'] = ((growth_comparison['User Count_last'] - growth_comparison['User Count_prev']) / 
+                                                    growth_comparison['User Count_prev'] * 100)
+                
+                # Create formatted table
+                growth_comparison = growth_comparison.sort_values('Growth Rate', ascending=False)
+                growth_table = growth_comparison[['Country', 'User Count_last', 'User Count_prev', 'Growth Rate']]
+                growth_table.columns = ['Country', 'Current Users', 'Previous Users', 'Growth Rate (%)']
+                
+                # Display the table
+                trend_subtab1.dataframe(growth_table.round(1), use_container_width=True)
+                
+                # Add insights
+                fastest_country = growth_comparison.iloc[0]['Country']
+                fastest_rate = growth_comparison.iloc[0]['Growth Rate']
+                slowest_country = growth_comparison.iloc[-1]['Country']
+                slowest_rate = growth_comparison.iloc[-1]['Growth Rate']
+                
+                trend_subtab1.markdown(f"""
+                <div class="insight-box">
+                    <div class="insight-header">Country Growth Insights</div>
+                    <div class="insight-item">
+                        <span class="insight-bullet">•</span> <strong>{fastest_country}</strong> shows the strongest growth at <span class="positive-trend">{fastest_rate:.1f}%</span> month-over-month.
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-bullet">•</span> <strong>{slowest_country}</strong> has the slowest growth rate at <span class="{'positive-trend' if slowest_rate > 0 else 'negative-trend'}">{slowest_rate:.1f}%</span>.
+                    </div>
+                    <div class="insight-item">
+                        Regional trends suggest focusing acquisition efforts on {fastest_country} and similar markets could yield better results.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+        else:
+            trend_subtab1.info("Insufficient historical data to generate country growth trends. Need at least 2 months of data.")
+            
 
         # Show trend alerts with boxed styling
         trend_subtab1.subheader("Trend Alerts & Opportunities")
